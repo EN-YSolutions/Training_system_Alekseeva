@@ -1,0 +1,15 @@
+body {
+  font-family: "PT Serif", serif !important;
+
+  display: flex;
+  flex-direction: column;
+
+  /* fallback height */
+  min-height: 100vh;
+  /* new small viewport height for modern browsers */
+  min-height: 100svh;
+}
+
+footer {
+  margin-top: auto;
+}
