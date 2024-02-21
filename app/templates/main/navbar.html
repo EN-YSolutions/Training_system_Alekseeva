@@ -11,9 +11,14 @@
                         Аккаунт
                     </a>
                     <ul class="dropdown-menu">
+                        {% if user.is_authenticated %}
                         <li><a class="dropdown-item" href="#">Студент</a></li>
                         <li><a class="dropdown-item" href="#">Сообщения</a></li>
                         <li><a class="dropdown-item" href="#">Уведомления</a></li>
+                        {% else %}
+                        <li><a class="dropdown-item" href="{{ url_for('auth.login') }}">Вход</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.register') }}">Регистрация</a></li>
+                        {% endif %}
                     </ul>
                 </li>
             </ul>
