@@ -152,7 +152,7 @@ class Hometasks(db.Model):
     student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
-    status = Column(Enum("not completed", "pending", "needs revision", "passed", "failed", name = "task_status"), nullable=False, unique=False)
+    status = Column(Enum("not completed", "pending", "needs revision", "correct", "incorrect", name = "task_status"), nullable=False, unique=False)
 
     def __repr__(self):
         return '<Hometask: %s>' % self.id 
