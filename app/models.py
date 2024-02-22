@@ -21,11 +21,9 @@ class Users(UserMixin, db.Model):
     courses = relationship("Courses", backref="author", lazy=True)
     courses_feedbacks = relationship("Courses_feedbacks", backref="author", lazy=True)
     groups = relationship("Groups", backref="curator", lazy=True)
-    groups_users = relationship("Groups_users", backref="student", lazy=True)
+    groups_members = relationship("Groups_members", backref="student", lazy=True)
     lessons = relationship("Lessons", backref="teacher", lazy=True)
     lessons_feedbacks = relationship("Lessons_feedbacks", backref="author", lazy=True)
-    progress = relationship("Progress", backref="user", lazy=True)
-    tasks = relationship("Tasks", backref="student", lazy=True)
     hometasks = relationship("Hometasks", backref="student", lazy=True)
     notifications = relationship("Notifications", backref="user", lazy=True)
     users_feedbacks = relationship("Users_feedbacks", backref="user", lazy=True, foreign_keys="[Users_feedbacks.user_id]")
@@ -75,14 +73,14 @@ class Groups(db.Model):
     title = Column(String(256), unique=False, nullable=False)
 
     deadlines = relationship("Deadlines", backref="group", lazy=True)
-    groups_users = relationship("Groups_users", backref="group", lazy=True)
+    groups_members = relationship("Groups_members", backref="group", lazy=True)
 
     def __repr__(self):
         return "<Group: %s>" % self.id
     
 
-class Groups_users(db.Model):
-    __tablename__ = 'groups_users'
+class Groups_members(db.Model):
+    __tablename__ = 'groups_members'
 
     group_id = Column(UUID, ForeignKey("groups.id"), primary_key=True, nullable=False, unique=False)
     student_id = Column(UUID, ForeignKey("users.id"), primary_key=True, nullable=False, unique=False)
@@ -97,13 +95,11 @@ class Lessons(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     course_id = Column(UUID, ForeignKey("courses.id"), nullable=False, unique=False)
     teacher_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    date = Column(DATE, nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
 
     deadlines = relationship("Deadlines", backref="lesson", lazy=True)
     lessons_feedbacks = relationship("Lessons_feedbacks", backref="lesson", lazy=True)
-    progress = relationship("Progress", backref="lesson", lazy=True)
     tasks = relationship("Tasks", backref="lesson", lazy=True)
 
     def __repr__(self):
@@ -113,9 +109,8 @@ class Lessons(db.Model):
 class Deadlines(db.Model):
     __tablename__ = 'deadlines'
 
-    id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
-    group_id = Column(UUID, ForeignKey("groups.id"), nullable=False, unique=False)
-    lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
+    group_id = Column(UUID, ForeignKey("groups.id"), primary_key=True, nullable=False, unique=False)
+    lesson_id = Column(UUID, ForeignKey("lessons.id"), primary_key=True, nullable=False, unique=False)
     deadline = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
 
     def __repr__(self):
@@ -133,18 +128,6 @@ class Lessons_feedbacks(db.Model):
 
     def __repr__(self):
         return '<Courses_feedback: %r>' % self.id
-
-
-class Progress(db.Model):
-    __tablename__ = 'progress'
-
-    id = Column(UUID, primary_key=True, nullable=False, unique=False, server_default=func.gen_random_uuid())
-    lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
-    user_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    progress_point = Column(Integer, unique=False, nullable=False)
-    
-    def __repr__(self):
-        return '<Progress: %s>' % self.id 
     
 
 class Tasks(db.Model):
@@ -152,10 +135,8 @@ class Tasks(db.Model):
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
-    student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
     description = Column(String(256), nullable=False, unique=False)
-    status = Column(Enum("not completed", "completed", "needs revision", "passed", "failed", name = "task_status"), nullable=False, unique=False)
 
     hometasks = relationship("Hometasks", backref="task", lazy=True)
 
@@ -171,6 +152,7 @@ class Hometasks(db.Model):
     student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
+    status = Column(Enum("not completed", "completed", "needs revision", "passed", "failed", name = "task_status"), nullable=False, unique=False)
 
     def __repr__(self):
         return '<Hometask: %s>' % self.id 
