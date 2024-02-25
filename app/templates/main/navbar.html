@@ -6,13 +6,14 @@
             </a>
             <ul class="nav">
                 <li class="nav-item dropdown">
-                    <a class="nav-link link-body-emphasis dropdown-toggle" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        Аккаунт
+                    <a href="#" class="d-block link-body-emphasis text-decoration-none" data-bs-toggle="dropdown">
+                        <span class="material-symbols-outlined" style="font-size: 34px;">
+                            account_circle
+                        </span>
                     </a>
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
-                        <li><a class="dropdown-item" href="#">Студент</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('profile.profile') }}">Студент</a></li>
                         <li><a class="dropdown-item" href="#">Сообщения</a></li>
                         <li><a class="dropdown-item" href="#">Уведомления</a></li>
                         {% else %}

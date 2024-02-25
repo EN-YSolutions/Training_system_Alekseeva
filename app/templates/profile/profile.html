@@ -2,6 +2,58 @@
 
 {% block content %}
 
+<div id="notification-container" class="m-auto"></div>
+<br />
+
+
+<div class="d-flex align-items-stretch">
+    <section class="left-sidebar p-1">
+        <div class="" style="width: 280px;">
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li>
+                    <a href="{{ url_for('profile.profile', menu='info') }}"
+                        class="d-flex nav-link align-items-center {% if menu_type == 'info' %}active{% else %}link-body-emphasis{% endif %}">
+                        <span class="material-symbols-outlined me-1">
+                            info
+                        </span>
+                        Информация
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile.profile', menu='groups') }}"
+                        class="d-flex nav-link align-items-center {% if menu_type == 'groups' %}active{% else %}link-body-emphasis{% endif %}">
+                        <span class="material-symbols-outlined me-1">
+                            groups
+                        </span>
+                        Группы
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile.profile', menu='settings') }}"
+                        class="d-flex nav-link align-items-center {% if menu_type == 'settings' %}active{% else %}link-body-emphasis{% endif %}">
+                        <span class="material-symbols-outlined me-1">
+                            settings
+                        </span>
+                        Настройки
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+    </section>
+    <div class="content">
+
+        {% if menu_type == "info" %}
+        info
+        {% elif menu_type == "groups" %}
+        groups
+        {% elif menu_type == "settings" %}
+        settings
+        {% endif %}
+
+    </div>
+</div>
 
 
 {% endblock %}
