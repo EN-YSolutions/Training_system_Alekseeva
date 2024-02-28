@@ -7,6 +7,7 @@ from sqlalchemy.types import Numeric
 from app.forms import LoginForm, RegisterForm 
 from app.models import Users
 from app.extensions import db, bcrypt
+from app.static.python.identicons import generate_avatar
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -62,7 +63,12 @@ def register():
     
             db.session.add(newuser)
             db.session.commit()
+
+            image = generate_avatar(newuser.login)
+            image.save(f'app/static/images/users/{newuser.login}.jpg', format='jpeg')
+
             flash(f"Аккаунт успешно создан", "success")
+
             return redirect(url_for("auth.login"))
 
         except IntegrityError as e:

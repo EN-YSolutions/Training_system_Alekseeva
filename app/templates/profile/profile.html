@@ -42,14 +42,118 @@
 
         </div>
     </section>
-    <div class="content">
+    <div class="container ms-4">
 
         {% if menu_type == "info" %}
-        info
+
+        <div class="d-flex flex-row">
+            <div class="d-flex flex-column mx-2">
+                <img src="{{ url_for('static', filename='images/users/{}.jpg'.format(user.login)) }}"
+                    class="rounded-3 mb-2" style="width: 150px;" alt="Avatar" />
+                <button type="button" class="btn btn-outline-secondary">Загрузить фото</button>
+                <p><small>пока не работает</small></p>
+            </div>
+            <div class="mx-2">
+                <h1>{{ user.name }}</h1>
+                <p><small>здесь будет последняя активность</small></p>
+            </div>
+        </div>
+
         {% elif menu_type == "groups" %}
-        groups
+
+        <h1>Группы</h1>
+        <div class="input-group align-items-center">
+            <form class="d-flex input-group w-auto">
+                <input type="search" class="form-control" placeholder="Название группы (пока не работает)"
+                    aria-label="Search" aria-describedby="search-addon" />
+                <button class="input-group-text border-1">
+                    <span class="material-symbols-outlined">
+                        search
+                    </span>
+                </button>
+            </form>
+        </div>
+        <div class="custom-form content">
+            <div class="card mt-2">
+
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h3>Название</h3>
+                        <div class="dropdown">
+                            <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
+                                <span class="material-symbols-outlined">
+                                    more_vert
+                                </span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Написать отзыв курсу</a></li>
+                                <li><a class="dropdown-item" href="#">Выйти из группы</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <span>Куратор: ... </span> <br />
+                    <span>Курс: ... </span> <br />
+                    <span>Студенты: ... </span> <br />
+                    <span>Ваш прогресс по курсу:</span>
+                    <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="25"
+                        aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" style="width: 25%"> 25% </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
         {% elif menu_type == "settings" %}
-        settings
+
+        <form method="POST" class="custom-form content">
+            {{settings_form.hidden_tag()}}
+            <p style="text-align: center; font-size: 30px;">Редактирование профиля</p>
+
+            <div class="row form-group">
+                {{ settings_form.user_name.label(class="col-sm-2 col-form-label") }}
+                <div class="col-sm-10">
+                    {{ settings_form.user_name(class="form-control") }}
+                </div>
+            </div>
+            <div class="row form-group">
+                {{ settings_form.scoring_system.label(class="col-sm-2 col-form-label") }}
+                <div class="col-sm-10">
+                    {{ settings_form.scoring_system(class="form-control") }}
+                </div>
+            </div>
+
+            <p style="text-align: center; font-size: 30px;">Изменить пароль</p>
+
+            <div class="row form-group">
+                {{ settings_form.old_password.label(class="col-sm-2 col-form-label") }}
+                <div class="col-sm-10">
+                    {{ settings_form.old_password(class="form-control") }}
+                </div>
+            </div>
+            <div class="row form-group">
+                {{ settings_form.new_password.label(class="col-sm-2 col-form-label") }}
+                <div class="col-sm-10">
+                    {{ settings_form.new_password(class="form-control") }}
+                </div>
+            </div>
+            <div class="row form-group">
+                {{ settings_form.confirm_password.label(class="col-sm-2 col-form-label") }}
+                <div class="col-sm-10">
+                    {{ settings_form.confirm_password(class="form-control") }}
+                </div>
+            </div>
+            <div class="row form-group">
+                <label class="col-sm-2 col-form-label">Баланс: {{user.balance}}</label>
+                <div class="col-sm-10">
+                    <button class="btn btn-secondary" href="#"> Пополнить баланс </button>
+                </div>
+            </div>
+
+            {{settings_form.submit(class="btn btn-primary")}}
+
+        </form>
+
         {% endif %}
 
     </div>
