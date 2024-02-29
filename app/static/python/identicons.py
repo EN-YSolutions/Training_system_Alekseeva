@@ -27,10 +27,8 @@ def generate_avatar(login: str):
         matrix.append(row)
     
     for row in matrix:
-        print(row)
         for j in range(4, 7):
             row[j] = row[7 - j - 1]
-        print(row)
 
 
     color = {
