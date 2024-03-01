@@ -2,6 +2,16 @@
 
 {% block content %}
 
+{% with messages=get_flashed_messages(with_categories=true) %}
+<br />
+{% for category, message in messages %}
+<div class='alert alert-{{category}} text-center alert-dismissible fade show m-auto'>
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endwith %}
+
 <div id="notification-container" class="m-auto"></div>
 <br />
 
@@ -112,43 +122,60 @@
 
         {% elif menu_type == "settings" %}
 
-        <form method="POST" class="custom-form content">
-            {{settings_form.hidden_tag()}}
+        <form method="POST" class="custom-form content" id="setting-form">
             <p style="text-align: center; font-size: 30px;">Редактирование профиля</p>
 
-            <div class="row form-group">
-                {{ settings_form.user_name.label(class="col-sm-2 col-form-label") }}
+            <div class="row form-group align-items-center">
+                <div class="col-sm-2">
+                    <label for="input-name" class="col-form-label">Ваше имя</label>
+                </div>
                 <div class="col-sm-10">
-                    {{ settings_form.user_name(class="form-control") }}
+                    <input id="input-name" name="new-name" class="form-control">
                 </div>
             </div>
-            <div class="row form-group">
-                {{ settings_form.scoring_system.label(class="col-sm-2 col-form-label") }}
+
+            <div class="row form-group align-items-center">
+                <div class="col-sm-2">
+                    <label for="choice-score" class="col-form-label">Система оценивания</label>
+                </div>
                 <div class="col-sm-10">
-                    {{ settings_form.scoring_system(class="form-control") }}
+                    <select class="form-select form-control" id="choice-score" name="scoring-system" required>
+                        <option value="1" {% if user.scoring_system=='abstract' %} selected {% endif %}>Абстрактная
+                        </option>
+                        <option value="2" {% if user.scoring_system=='points' %} selected {% endif %}>Числовые значения
+                        </option>
+                    </select>
                 </div>
             </div>
 
             <p style="text-align: center; font-size: 30px;">Изменить пароль</p>
 
-            <div class="row form-group">
-                {{ settings_form.old_password.label(class="col-sm-2 col-form-label") }}
+            <div class="row form-group align-items-center">
+                <div class="col-sm-2">
+                    <label for="input-old-password" class="col-form-label">Старый пароль</label>
+                </div>
                 <div class="col-sm-10">
-                    {{ settings_form.old_password(class="form-control") }}
+                    <input type="password" id="input-old-password" name="old-password" class="form-control">
                 </div>
             </div>
-            <div class="row form-group">
-                {{ settings_form.new_password.label(class="col-sm-2 col-form-label") }}
+            <div class="row form-group align-items-center">
+                <div class="col-sm-2">
+                    <label for="input-new-password" class="col-form-label">Новый пароль</label>
+                </div>
                 <div class="col-sm-10">
-                    {{ settings_form.new_password(class="form-control") }}
+                    <input type="password" id="input-new-password" name="new-password" class="form-control">
                 </div>
             </div>
-            <div class="row form-group">
-                {{ settings_form.confirm_password.label(class="col-sm-2 col-form-label") }}
+            <div class="row form-group align-items-center">
+                <div class="col-sm-2">
+                    <label for="input-confirm-password" class="col-form-label">Повторите новый пароль</label>
+                </div>
                 <div class="col-sm-10">
-                    {{ settings_form.confirm_password(class="form-control") }}
+                    <input type="password" id="input-confirm-password" name="confirm-password" class="form-control">
                 </div>
             </div>
+
+
             <div class="row form-group">
                 <label class="col-sm-2 col-form-label">Баланс: {{user.balance}}</label>
                 <div class="col-sm-10">
@@ -156,7 +183,9 @@
                 </div>
             </div>
 
-            {{settings_form.submit(class="btn btn-primary")}}
+            <div class="col-12">
+                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+            </div>
 
         </form>
 
@@ -171,47 +200,80 @@
     document.addEventListener('DOMContentLoaded', function () {
 
         var fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (event) {
+                var file = event.target.files[0];
+                if (file.type.startsWith('image/')) {
+                    var formData = new FormData();
+                    formData.append('image', file);
 
-        fileInput.addEventListener('change', function (event) {
-            var file = event.target.files[0];
-            if (file.type.startsWith('image/')) {
-                var formData = new FormData();
-                formData.append('image', file);
+                    fetch('/profile/upload_image', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Изображение успешно загружено');
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при загрузке изображения:', error);
+                        });
 
-                fetch('/profile/upload_image', {
+                }
+
+            });
+        }
+
+        var deletePhotoButton = document.getElementById('delete-photo-btn');
+
+        if (deletePhotoButton) {
+            deletePhotoButton.addEventListener('click', function (event) {
+
+                fetch('/profile/delete_image', {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Изображение успешно удалено');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при удалении изображения:', error);
+                    });
+            });
+        }
+
+        var settingsForm = document.getElementById('setting-form');
+
+        if (settingsForm) {
+            settingsForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(settingsForm);
+
+                fetch('/profile/update_settings', {
                     method: 'POST',
                     body: formData
                 })
                     .then(response => response.json())
                     .then(data => {
-                        console.log('Изображение успешно загружено');
-                        window.location.reload();
+
+                        if (data.message && data.category) {
+
+                            showNotification(data.message, data.category);
+                        }
+
+                        document.getElementById('input-old-password').value = '';
+                        document.getElementById('input-new-password').value = '';
+                        document.getElementById('input-confirm-password').value = '';
+
                     })
                     .catch(error => {
-                        console.error('Ошибка при загрузке изображения:', error);
+                        console.log(error);
                     });
-
-            }
-
-        });
-
-        var deletePhotoButton = document.getElementById('delete-photo-btn');
-
-        deletePhotoButton.addEventListener('click', function (event) {
-
-            fetch('/profile/delete_image', {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Изображение успешно удалено');
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Ошибка при удалении изображения:', error);
             });
-        });
-
+        }
     });
 
 </script>

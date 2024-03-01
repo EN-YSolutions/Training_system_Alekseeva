@@ -13,3 +13,13 @@ body {
 footer {
   margin-top: auto;
 }
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}

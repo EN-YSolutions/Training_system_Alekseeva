@@ -1,11 +1,21 @@
 <header class="p-3">
     <div class="container">
-        <nav class="navbar border-bottom border-body d-flex align-items-center justify-content-center justify-content-lg-start">
+        <nav
+            class="navbar border-bottom border-body d-flex align-items-center justify-content-center justify-content-lg-start">
             <a href="/" class=" d-flex align-items-center mb-2 mb-lg-0 link-body-emphasis text-decoration-none">
                 <a class="navbar-brand me-lg-auto" href="{{ url_for('main.index') }}">Образовательный портал</a>
             </a>
             <ul class="nav">
-                <li class="nav-item dropdown">
+                <a href="#" class="d-block link-body-emphasis text-decoration-none position-relative">
+                    <span class="material-symbols-outlined" style="font-size: 34px;">
+                        notifications
+                    </span>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-info">
+                        0
+                        <span class="visually-hidden">Непрочитанные сообщения</span>
+                    </span>
+                </a>
+                <li class="nav-item dropdown ms-4">
                     <a href="#" class="d-block link-body-emphasis text-decoration-none" data-bs-toggle="dropdown">
                         <span class="material-symbols-outlined" style="font-size: 34px;">
                             account_circle
@@ -15,7 +25,6 @@
                         {% if user.is_authenticated %}
                         <li><a class="dropdown-item" href="{{ url_for('profile.profile') }}">Студент</a></li>
                         <li><a class="dropdown-item" href="#">Сообщения</a></li>
-                        <li><a class="dropdown-item" href="#">Уведомления</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="{{ url_for('auth.login') }}">Вход</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('auth.register') }}">Регистрация</a></li>
