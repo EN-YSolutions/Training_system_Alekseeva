@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
+from sqlalchemy import select, join, alias
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from PIL import Image
-from app.forms import SettingsForm
+from app.models import Groups_members, Groups, Users, Courses
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
@@ -17,7 +18,20 @@ def profile():
 
     menu_type = request.args.get('menu')
 
-    return render_template("profile/profile.html", user=current_user, menu_type=menu_type)
+    result = dict.fromkeys(db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all(), [])
+    
+    for group in result:
+        result[group].append(db.session.query(Users.id, Users.name).filter(Users.id == group.curator_id).first())
+        result[group].append(db.session.query(Courses.id, Courses.title).filter(Courses.id == group.course_id).first())
+        result[group].append(db.session.query(Users.id, Users.name)
+                .join(Groups_members, Users.id == Groups_members.student_id)
+                .filter(Groups_members.group_id == group.id)
+                .all()
+                )
+    
+    print(result)
+
+    return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result)
 
 
 @profile_bp.route("/profile/upload_image", methods=['POST'])
@@ -88,7 +102,8 @@ def update_settings():
         if old_password:
             if check_password_hash(current_user.password, old_password):
                 if new_password == confirm_password:
-                    current_user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+                    current_user.password = bcrypt.generate_password_hash(
+                        new_password).decode('utf-8')
                 else:
                     return jsonify({'category': 'warning', 'message': 'Пароли не совпадают'})
             else:

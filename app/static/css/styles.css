@@ -23,3 +23,8 @@ footer {
   padding: 8px;
   box-sizing: border-box;
 }
+
+a.nounderline {
+  text-decoration: none; 
+  color:inherit;
+}

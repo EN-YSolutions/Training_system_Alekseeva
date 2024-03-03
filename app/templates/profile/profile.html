@@ -2,16 +2,6 @@
 
 {% block content %}
 
-{% with messages=get_flashed_messages(with_categories=true) %}
-<br />
-{% for category, message in messages %}
-<div class='alert alert-{{category}} text-center alert-dismissible fade show m-auto'>
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endfor %}
-{% endwith %}
-
 <div id="notification-container" class="m-auto"></div>
 <br />
 
@@ -90,11 +80,11 @@
             </form>
         </div>
         <div class="custom-form content">
+            {% for group, value in groups.items() %}
             <div class="card mt-2">
-
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
-                        <h3>Название</h3>
+                        <h3>{{ group.title }}</h3>
                         <div class="dropdown">
                             <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
                                 <span class="material-symbols-outlined">
@@ -107,17 +97,21 @@
                             </ul>
                         </div>
                     </div>
-                    <span>Куратор: ... </span> <br />
-                    <span>Курс: ... </span> <br />
-                    <span>Студенты: ... </span> <br />
+                    <span>Куратор: <a href="#" class="nounderline">{{ value[0][1] }}</a> </span> <br />
+                    <span>Курс: <a href="#" class="nounderline">{{ value[1][1] }}</a> </span> <br />
+                    <span>Студенты:
+                        {% for student in value[2] %}
+                        <a href="#" class="nounderline">{{ student.name }}</a>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </span> <br />
                     <span>Ваш прогресс по курсу:</span>
                     <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="25"
                         aria-valuemin="0" aria-valuemax="100">
                         <div class="progress-bar" style="width: 25%"> 25% </div>
                     </div>
-
                 </div>
             </div>
+            {% endfor %}
         </div>
 
         {% elif menu_type == "settings" %}
