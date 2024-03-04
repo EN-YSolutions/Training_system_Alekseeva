@@ -18,3 +18,7 @@ $ flask shell
 ```shell
 flask run
 ```
+
+### Скриншоты
+
+![Информация](assets/info.png "Информация")

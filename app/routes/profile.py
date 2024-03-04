@@ -4,7 +4,7 @@ from flask_bcrypt import check_password_hash
 from sqlalchemy import select, join, alias
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from PIL import Image
-from app.models import Groups_members, Groups, Users, Courses
+from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
@@ -22,14 +22,18 @@ def profile():
     
     for group in result:
         result[group].append(db.session.query(Users.id, Users.name).filter(Users.id == group.curator_id).first())
-        result[group].append(db.session.query(Courses.id, Courses.title).filter(Courses.id == group.course_id).first())
+        course = db.session.query(Courses).filter(Courses.id == group.course_id).first()
+        result[group].append((course.id, course.title))
         result[group].append(db.session.query(Users.id, Users.name)
                 .join(Groups_members, Users.id == Groups_members.student_id)
                 .filter(Groups_members.group_id == group.id)
                 .all()
                 )
+        tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
+        
+        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
     
-    print(result)
+        result[group].append(round(tasks_status.count('correct') / len(tasks_status) * 100, 2))
 
     return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result)
 
