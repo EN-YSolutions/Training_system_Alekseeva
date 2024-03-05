@@ -1,9 +1,8 @@
+from PIL import Image
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
-from sqlalchemy import select, join, alias
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from PIL import Image
 from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar

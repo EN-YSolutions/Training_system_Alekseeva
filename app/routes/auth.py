@@ -1,3 +1,4 @@
+from os.path import isfile
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, logout_user, login_user
 from flask_bcrypt import check_password_hash
@@ -21,9 +22,12 @@ def login():
             user = Users.query.filter_by(login=form.login.data).first()
             if check_password_hash(user.password, form.password.data):
                 login_user(user)
+                if not isfile(f"app/static/images/users/{current_user.login}.jpg"):
+                    image = generate_avatar(current_user.login)
+                    image.save(f'app/static/images/users/{current_user.login}.jpg', format='jpeg')
                 return redirect(url_for('main.index'))
             else:
-                flash("Ошибка логина или пароля!", "danger")
+                flash("Ошибка пароля", "danger")
         
         except AttributeError as e:
             print(str(e))

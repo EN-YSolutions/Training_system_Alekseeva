@@ -1,12 +1,16 @@
+from os import makedirs
+from uuid import UUID
 from flask import Flask
-from app.routes import get_blueprints
 from config import Config
+from app.routes import get_blueprints
 from app.extensions import login_manager, bcrypt, db
 from app.models import Users
-from uuid import UUID
 
 
 def create_app(config_class=Config):
+
+    makedirs("app/static/images", exist_ok=True)
+    makedirs("app/static/images/users", exist_ok=True)
 
     app = Flask(__name__)
     app.config.from_object(config_class)

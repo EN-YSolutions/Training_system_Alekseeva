@@ -13,7 +13,7 @@ source .venv/bin/activate
 3. Задать преременные окружения `SECRET_KEY` и `DATABASE_URI` в командной строке, в файле `.venv/bin/activate` или напрямую в файле `config.py`
 
 - `SECRET_KEY` - Секретный ключ, который будет использоваться для безопасной подписи cookie-файла сеанса.
-- `DATABSSE_URL` - Cтрока, которая сообщает SQLAlchemy, к какой базе данных подключаться.
+- `DATABASE_URL` - Cтрока, которая сообщает SQLAlchemy, к какой базе данных подключаться.
 
 ```shell
 export SECRET_KEY="..."
