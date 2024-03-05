@@ -11,7 +11,7 @@
         <div class="" style="width: 280px;">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li>
-                    <a href="{{ url_for('profile.profile', menu='info') }}"
+                    <a href="{{ url_for('profile.profile', id=user.id, menu='info') }}"
                         class="d-flex nav-link align-items-center {% if menu_type == 'info' %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             info
@@ -20,7 +20,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile.profile', menu='groups') }}"
+                    <a href="{{ url_for('profile.profile', id=user.id, menu='groups') }}"
                         class="d-flex nav-link align-items-center {% if menu_type == 'groups' %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             groups
@@ -29,7 +29,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile.profile', menu='settings') }}"
+                    <a href="{{ url_for('profile.profile', id=user.id, menu='settings') }}"
                         class="d-flex nav-link align-items-center {% if menu_type == 'settings' %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             settings

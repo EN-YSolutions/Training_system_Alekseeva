@@ -3,21 +3,22 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks
+from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
 profile_bp = Blueprint('profile', __name__)
 
 
-@profile_bp.route('/profile', methods=['GET', 'POST'])
-def profile():
+@profile_bp.route('/profile/<id>', methods=['GET', 'POST'])
+def profile(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
     menu_type = request.args.get('menu')
 
     result = dict.fromkeys(db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all(), [])
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
     
     for group in result:
         result[group].append(db.session.query(Users.id, Users.name).filter(Users.id == group.curator_id).first())
@@ -34,7 +35,43 @@ def profile():
     
         result[group].append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
 
-    return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result)
+    return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result, unread=unread)
+
+
+
+@profile_bp.route("/profile/<id>/notifications")
+def notifications(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+    notifications = db.session.query(Notifications).filter(Notifications.user_id == current_user.id).all()
+
+    return render_template("profile/notifications.html", user=current_user, notifications=notifications, unread=unread)
+
+
+@profile_bp.route("/profile/notification_status", methods=['POST'])
+def notification_status():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        data = request.get_json()
+
+        notification_id = data.get('notificationId')
+        status = data.get('status')
+
+        db.session.query(Notifications).filter(Notifications.id == notification_id).first().unread = True if status == 'unread' else False
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Статут уведомления изменен'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)})
+    
+
+    return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
 @profile_bp.route("/profile/upload_image", methods=['POST'])
@@ -76,6 +113,8 @@ def upload_image():
 
 @profile_bp.route("/profile/delete_image", methods=['DELETE'])
 def delete_image():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
 
     image = generate_avatar(current_user.login)
     image.save(
@@ -86,6 +125,8 @@ def delete_image():
 
 @profile_bp.route("/profile/update_settings", methods=['POST'])
 def update_settings():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
 
     scoring_system_names = {1: 'abstract', 2: 'points'}
 

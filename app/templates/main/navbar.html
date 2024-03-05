@@ -6,15 +6,19 @@
                 <a class="navbar-brand me-lg-auto" href="{{ url_for('main.index') }}">Образовательный портал</a>
             </a>
             <ul class="nav">
-                <a href="#" class="d-block link-body-emphasis text-decoration-none position-relative">
+
+                {% if user.is_authenticated %}
+                <a href="{{ url_for('profile.notifications', id=user.id) }}"
+                    class="d-block link-body-emphasis text-decoration-none position-relative">
                     <span class="material-symbols-outlined" style="font-size: 34px;">
                         notifications
                     </span>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-info">
-                        0
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-info" id="navbar_notifications">
+                        {{ unread }}
                         <span class="visually-hidden">Непрочитанные сообщения</span>
                     </span>
                 </a>
+                {% endif %}
                 <li class="nav-item dropdown ms-4">
                     <a href="#" class="d-block link-body-emphasis text-decoration-none" data-bs-toggle="dropdown">
                         <span class="material-symbols-outlined" style="font-size: 34px;">
@@ -23,7 +27,8 @@
                     </a>
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
-                        <li><a class="dropdown-item" href="{{ url_for('profile.profile', menu='info') }}">Студент</a></li>
+                        <li><a class="dropdown-item"
+                                href="{{ url_for('profile.profile', id=user.id, menu='info') }}">Студент</a></li>
                         <li><a class="dropdown-item" href="#">Сообщения</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Выход</a></li>
                         {% else %}

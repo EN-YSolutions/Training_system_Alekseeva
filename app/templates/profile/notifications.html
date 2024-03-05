@@ -1,0 +1,94 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+
+<div id="notification-container" class="m-auto"></div>
+<br />
+
+<div class="custom-form content">
+    {% for notification in notifications %}
+    <div class="card mt-2">
+        <div class="card-header">
+            <div class="d-flex justify-content-between">
+                <h3>{{ notification.title }}</h3>
+                <button class="btn btn-link pull-right nav-link" id="notificationButton" data-notification-id="{{ notification.id }}">
+                    {% if notification.unread %}
+                    <span class="material-symbols-outlined" data-bs-toggle="tooltip"
+                        data-bs-title="Отметить как прочитанное" id="notificationIcon">mark_email_read</span>
+                    {% else %}
+                    <span class="material-symbols-outlined" data-bs-toggle="tooltip"
+                        data-bs-title="Отметить как непрочитанное" id="notificationIcon">mark_email_unread</span>
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <p>{{ notification.description }}</p>
+
+        </div>
+        <div class="card-footer text-body-secondary">
+            {{ notification.date }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        var tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+        document.getElementById('notificationButton').addEventListener('click', function () {
+            var icon = document.getElementById('notificationIcon');
+            var notificationId = document.getElementById('notificationButton').getAttribute('data-notification-id');
+            var status = (icon.textContent === 'mark_email_read') ? 'read' : 'unread';
+
+            var navbarNotif = document.getElementById("navbar_notifications");
+
+            var currentCount = parseInt(navbarNotif.textContent);
+
+
+            if (icon.textContent === 'mark_email_read') {
+                icon.textContent = 'mark_email_unread';
+                icon.setAttribute('data-bs-title', 'Отметить как непрочитанное');
+                navbarNotif.textContent = currentCount - 1;
+            } else {
+                icon.textContent = 'mark_email_read';
+                icon.setAttribute('data-bs-title', 'Отметить как прочитанное');
+                navbarNotif.textContent = currentCount + 1;
+            }
+
+            var status = (icon.textContent === 'mark_email_read') ? 'unread' : 'read';
+
+            fetch('/profile/notification_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notificationId: notificationId,
+                    status: status
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Данные об уведомлении изменены');
+                })
+                .catch(error => {
+                    console.error('Ошибка на сервере:', error);
+                });
+
+            tooltipList.forEach(tooltip => tooltip.dispose());
+
+            tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+            tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+
+
+        });
+    });
+</script>
+
+{% endblock %}

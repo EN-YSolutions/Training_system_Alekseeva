@@ -1,9 +1,9 @@
 from flask_login import UserMixin
 from sqlalchemy import func
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.types import String, Enum, Text, Integer
+from sqlalchemy.types import String, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID, MONEY, DATE, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID, MONEY, TIMESTAMP
 from app.extensions import db
 
 
@@ -165,6 +165,7 @@ class Notifications(db.Model):
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
     description = Column(Text, nullable=False, unique=False)
+    unread = Column(Boolean, nullable=False, unique=False, default=True)
     date = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
 
     def __repr__(self):
