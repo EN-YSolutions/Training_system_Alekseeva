@@ -33,7 +33,7 @@ def profile():
         
         tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
     
-        result[group].append(round(tasks_status.count('correct') / len(tasks_status) * 100, 2))
+        result[group].append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
 
     return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result)
 

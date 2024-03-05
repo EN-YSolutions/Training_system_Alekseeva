@@ -1,6 +1,32 @@
 # Личный кабинет для образовательного портала
 
-### Генерация базы данных
+## Инструкция по запуску на Linux
+
+1. Установить Python (предустановлен в большинстве дистрибутивов)
+2. Создание виртуального окружения (venv) и его активация
+
+```shell
+python -m venv .venv
+source .venv/bin/activate
+```
+
+3. Задать преременные окружения `SECRET_KEY` и `DATABASE_URI` в командной строке, в файле `.venv/bin/activate` или напрямую в файле `config.py`
+
+- `SECRET_KEY` - Секретный ключ, который будет использоваться для безопасной подписи cookie-файла сеанса.
+- `DATABSSE_URL` - Cтрока, которая сообщает SQLAlchemy, к какой базе данных подключаться.
+
+```shell
+export SECRET_KEY="..."
+export DATABASE_URI="postgresql+psycopg://username:password@host:port/database_name"
+```
+
+4. Установка зависимостей в виртуальное окружение
+
+```shell
+pip install -r requirements.txt
+```
+
+5. Генерация базы данных
 
 ```shell
 $ flask shell
@@ -10,10 +36,7 @@ $ flask shell
 >>> exit()
 ```
 
-### Запуск приложения
-
-Необходимо установить переменные окружения `SECRET_KEY` и `DATABASE_URI`.
-Запуск приложения осуществляется следующей командой.
+6. Запуск приложения
 
 ```shell
 flask run
