@@ -48,7 +48,7 @@
         <div class="d-flex flex-row">
             <div class="d-flex flex-column mx-2">
                 <img src="{{ url_for('static', filename='images/users/{}.jpg'.format(user.login)) }}"
-                    class="rounded-3 mb-2" style="width: 150px;" alt="Avatar" />
+                    class="rounded-3 mb-2 border border-secondary" style="width: 150px;" alt="Avatar" />
 
 
                 <label for="file-input" class="btn btn-outline-secondary">
@@ -68,17 +68,15 @@
         {% elif menu_type == "groups" %}
 
         <h1>Группы</h1>
-        <div class="input-group align-items-center">
-            <form class="d-flex input-group w-auto">
-                <input type="search" class="form-control" placeholder="Название группы (пока не работает)"
-                    aria-label="Search" aria-describedby="search-addon" />
-                <button class="input-group-text border-1">
-                    <span class="material-symbols-outlined">
-                        search
-                    </span>
-                </button>
-            </form>
-        </div>
+        <form class="d-flex input-group w-auto">
+            <input type="search" class="form-control" placeholder="Название группы/курса (пока не работает)"
+                aria-label="Search" aria-describedby="search-addon" />
+            <button class="input-group-text border-1">
+                <span class="material-symbols-outlined">
+                    search
+                </span>
+            </button>
+        </form>
         <div class="custom-form content">
             {% for group, value in groups.items() %}
             <div class="card mt-2">
@@ -124,7 +122,7 @@
                     <label for="input-name" class="col-form-label">Ваше имя</label>
                 </div>
                 <div class="col-sm-10">
-                    <input id="input-name" name="new-name" class="form-control">
+                    <input id="input-name" name="new-name" class="form-control" value="{{ user.name }}">
                 </div>
             </div>
 

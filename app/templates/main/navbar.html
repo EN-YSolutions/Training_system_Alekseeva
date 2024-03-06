@@ -21,9 +21,7 @@
                 {% endif %}
                 <li class="nav-item dropdown ms-4">
                     <a href="#" class="d-block link-body-emphasis text-decoration-none" data-bs-toggle="dropdown">
-                        <span class="material-symbols-outlined" style="font-size: 34px;">
-                            account_circle
-                        </span>
+                        <img src="{{ url_for('static', filename='images/users/{}.jpg'.format(user.login)) }}" alt="mdo" width="34" height="34" class="rounded-circle border border-secondary">
                     </a>
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
