@@ -1,6 +1,6 @@
 from random import choice
 import hashlib
-from PIL import Image, ImageDraw
+from PIL import Image
 
 
 colors = [

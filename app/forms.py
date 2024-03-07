@@ -1,5 +1,11 @@
+"""
+Файл forms.py содержит определение форм с использованием библиотек Flask-WTF и WTForms. 
+Каждая форма содержит поля для ввода информации, а также соответствующие валидаторы 
+для проверки корректности введенных данных.
+Эти формы интегрированы в приложение для обработки пользовательского ввода.
+"""
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, validators
+from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, EqualTo, ValidationError
 from app.models import Users
 

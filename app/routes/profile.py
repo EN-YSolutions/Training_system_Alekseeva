@@ -1,3 +1,6 @@
+"""
+Определение маршрутов для страницы профиля веб-приложения.
+"""
 from PIL import Image
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user
@@ -12,6 +15,10 @@ profile_bp = Blueprint('profile', __name__)
 
 @profile_bp.route('/profile/<id>', methods=['GET', 'POST'])
 def profile(id):
+    """
+    Функция обработки маршрута '/profile/<id>', предоставляющая профиль пользователя.
+    Включает информацию о пользователе, его группах, уведомлениях и т. д.
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
@@ -41,6 +48,9 @@ def profile(id):
 
 @profile_bp.route("/profile/<id>/notifications")
 def notifications(id):
+    """
+    Функция обработки маршрута '/profile/<id>/notifications', позволяющая просматривать уведомления пользователя.
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
@@ -52,6 +62,9 @@ def notifications(id):
 
 @profile_bp.route("/profile/notification_status", methods=['POST'])
 def notification_status():
+    """
+    Функция обработки маршрута '/profile/notification_status', позволяющая изменять статус уведомления (прочитано/не прочитано).
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
@@ -76,6 +89,9 @@ def notification_status():
 
 @profile_bp.route("/profile/upload_image", methods=['POST'])
 def upload_image():
+    """
+    Функция обработки маршрута '/profile/upload_image', позволяющая загружать изображение профиля пользователя.
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
@@ -113,6 +129,9 @@ def upload_image():
 
 @profile_bp.route("/profile/delete_image", methods=['DELETE'])
 def delete_image():
+    """
+    Функция обработки маршрута '/profile/delete_image', позволяющая удалять изображение профиля пользователя.
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
@@ -125,6 +144,9 @@ def delete_image():
 
 @profile_bp.route("/profile/update_settings", methods=['POST'])
 def update_settings():
+    """
+    Функция обработки маршрута '/profile/update_settings', позволяющая обновлять настройки профиля пользователя.
+    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 

@@ -1,3 +1,9 @@
+"""
+Файл models.py содержит описания классов моделей для работы с базой данных. 
+Каждый класс содержит описание полей таблицы и их взаимосвязей с другими таблицами. 
+Также предоставлены методы __repr__ для отображения объектов в виде строк.
+"""
+
 from flask_login import UserMixin
 from sqlalchemy import func
 from sqlalchemy.schema import Column, ForeignKey

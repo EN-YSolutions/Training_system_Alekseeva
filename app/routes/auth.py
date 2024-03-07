@@ -1,3 +1,7 @@
+"""
+Определение маршрутов для аутентификации веб-приложения. 
+Маршруты включают в себя функции для входа в систему, регистрации новых пользователей и выхода из системы.
+"""
 from os.path import isfile
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, logout_user, login_user
@@ -14,6 +18,10 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST', 'GET'])
 def login():
+    """
+    Функция обработки маршрута /login, предоставляющая вход в систему для зарегистрированных пользователей. 
+    Проверяет введенные данные и аутентифицирует пользователя, а также генерирует и сохраняет аватар пользователя, при его отсутствии в системе.
+    """
 
     form = LoginForm()
 
@@ -47,6 +55,10 @@ def login():
 
 @auth_bp.route('/register', methods=['POST', 'GET'])
 def register():
+    """
+    Функция обработки маршрута /register, предоставляющая форму регистрации новых пользователей. 
+    При успешной регистрации создает нового пользователя, хэширует его пароль, сохраняет в базе данных и генерирует аватар.
+    """
 
     form = RegisterForm()
 
@@ -89,5 +101,8 @@ def register():
 
 @auth_bp.route('/logout')
 def logout():
+    """
+    Функция обработки маршрута /logout, выполняющая выход пользователя из системы.
+    """
     logout_user()
     return redirect(url_for('auth.login'))
