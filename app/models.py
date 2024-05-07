@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.types import String, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID, MONEY, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, NUMERIC
 from app.extensions import db
 
 
@@ -21,7 +21,7 @@ class Users(UserMixin, db.Model):
     password = Column(String(60), unique=False, nullable=False)
     role = Column(Enum("admin", "curator", "teacher", "student", name="user_role"), unique=False, nullable=False)
     name = Column(Text, unique=False, nullable=False)
-    balance = Column(MONEY, unique=False, nullable=False)
+    balance = Column(NUMERIC(19, 2), unique=False, nullable=False)
     scoring_system = Column(Enum("abstract", "points", name="score_type"), unique=False, nullable=False)
 
     courses = relationship("Courses", backref="author", lazy=True)
@@ -44,7 +44,7 @@ class Courses(db.Model):
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    price = Column(MONEY, unique=False, nullable=False)
+    price = Column(NUMERIC(19, 2), unique=False, nullable=False)
     title = Column(String(256), unique=False, nullable=False)
     description = Column(Text, unique=False, nullable=True)
 
@@ -76,7 +76,7 @@ class Groups(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     course_id = Column(UUID, ForeignKey("courses.id"), nullable=False, unique=False)
     curator_id = Column(UUID, ForeignKey("users.id"), nullable=True, unique=False)
-    title = Column(String(256), unique=False, nullable=False)
+    title = Column(String(256), unique=False, nullable=True)
 
     deadlines = relationship("Deadlines", backref="group", lazy=True)
     groups_members = relationship("Groups_members", backref="group", lazy=True)
@@ -142,7 +142,7 @@ class Tasks(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
     title = Column(String(256), nullable=False, unique=False)
-    description = Column(String(256), nullable=False, unique=False)
+    description = Column(Text, nullable=False, unique=False)
 
     hometasks = relationship("Hometasks", backref="task", lazy=True)
 

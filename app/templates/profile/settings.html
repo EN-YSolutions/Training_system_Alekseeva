@@ -1,0 +1,70 @@
+{% extends 'profile/profile.html' %}
+
+{% block profile_content %}
+<form method="POST" class="custom-form content" id="setting-form">
+    <p style="text-align: center; font-size: 30px;">Редактирование профиля</p>
+
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-name" class="col-form-label">Ваше имя</label>
+        </div>
+        <div class="col-sm-10">
+            <input id="input-name" name="new-name" class="form-control" value="{{ user.name }}">
+        </div>
+    </div>
+
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="choice-score" class="col-form-label">Система оценивания</label>
+        </div>
+        <div class="col-sm-10">
+            <select class="form-select form-control" id="choice-score" name="scoring-system" required>
+                <option value="1" {% if user.scoring_system=='abstract' %} selected {% endif %}>Абстрактная
+                </option>
+                <option value="2" {% if user.scoring_system=='points' %} selected {% endif %}>Числовые значения
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <p style="text-align: center; font-size: 30px;">Изменить пароль</p>
+
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-old-password" class="col-form-label">Старый пароль</label>
+        </div>
+        <div class="col-sm-10">
+            <input type="password" id="input-old-password" name="old-password" class="form-control">
+        </div>
+    </div>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-new-password" class="col-form-label">Новый пароль</label>
+        </div>
+        <div class="col-sm-10">
+            <input type="password" id="input-new-password" name="new-password" class="form-control">
+        </div>
+    </div>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-confirm-password" class="col-form-label">Повторите новый пароль</label>
+        </div>
+        <div class="col-sm-10">
+            <input type="password" id="input-confirm-password" name="confirm-password" class="form-control">
+        </div>
+    </div>
+
+
+    <div class="row form-group">
+        <label class="col-sm-2 col-form-label">Баланс: {{user.balance}}</label>
+        <div class="col-sm-10">
+            <button class="btn btn-secondary" href="#"> Пополнить баланс </button>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+    </div>
+
+</form>
+{% endblock %}

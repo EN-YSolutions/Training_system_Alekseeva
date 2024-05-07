@@ -15,35 +15,65 @@ profile_bp = Blueprint('profile', __name__)
 
 @profile_bp.route('/profile/<id>', methods=['GET', 'POST'])
 def profile(id):
-    """
-    Функция обработки маршрута '/profile/<id>', предоставляющая профиль пользователя.
-    Включает информацию о пользователе, его группах, уведомлениях и т. д.
-    """
+
+    user = Users.query.filter_by(id=id).first()
+    # todo: добавить страницу с ошибкой "пользователь не найден"
+    if user is None:
+        user = current_user
+
+    return redirect(url_for('profile.profile_info', id=user.id))
+
+
+@profile_bp.route('/profile/<id>/info', methods=['GET', 'POST'])
+def profile_info(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    return render_template("profile/info.html", user=current_user, unread=unread)
+
+
+@profile_bp.route('/profile/<id>/groups', methods=['GET', 'POST'])
+def profile_groups(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
-    menu_type = request.args.get('menu')
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all()
 
     result = dict.fromkeys(db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all(), [])
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
-    
-    for group in result:
-        result[group].append(db.session.query(Users.id, Users.name).filter(Users.id == group.curator_id).first())
+
+    for group in groups:
+
+        result_list = []
+        
+        result_list.append(db.session.query(Users.id, Users.name).filter(Users.id == group.curator_id).first())
         course = db.session.query(Courses).filter(Courses.id == group.course_id).first()
-        result[group].append((course.id, course.title))
-        result[group].append(db.session.query(Users.id, Users.name)
+        result_list.append((course.id, course.title))
+        result_list.append(db.session.query(Users.id, Users.name)
                 .join(Groups_members, Users.id == Groups_members.student_id)
                 .filter(Groups_members.group_id == group.id)
-                .all()
-                )
+                .all() if course.price != 0 else None)
+        
         tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
         
         tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
+
+        result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
+        result[group] = result_list
     
-        result[group].append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
+    return render_template("profile/groups.html", user=current_user, groups=result, unread=unread)
 
-    return render_template("profile/profile.html", user=current_user, menu_type=menu_type, groups=result, unread=unread)
 
+@profile_bp.route('/profile/<id>/settings', methods=['GET', 'POST'])
+def profile_settings(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    return render_template("profile/settings.html", user=current_user, unread=unread)
 
 
 @profile_bp.route("/profile/<id>/notifications")
@@ -83,9 +113,6 @@ def notification_status():
         db.session.rollback()
         return jsonify({'error': str(e)})
     
-
-    return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
-
 
 @profile_bp.route("/profile/upload_image", methods=['POST'])
 def upload_image():
@@ -188,5 +215,3 @@ def update_settings():
         db.session.rollback()
         print(str(e))
         return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
-
-    return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})

@@ -11,8 +11,8 @@
         <div class="" style="width: 280px;">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li>
-                    <a href="{{ url_for('profile.profile', id=user.id, menu='info') }}"
-                        class="d-flex nav-link align-items-center {% if menu_type == 'info' %}active{% else %}link-body-emphasis{% endif %}">
+                    <a href="{{ url_for('profile.profile_info', id=user.id) }}"
+                        class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_info', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             info
                         </span>
@@ -20,8 +20,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile.profile', id=user.id, menu='groups') }}"
-                        class="d-flex nav-link align-items-center {% if menu_type == 'groups' %}active{% else %}link-body-emphasis{% endif %}">
+                    <a href="{{ url_for('profile.profile_groups', id=user.id) }}"
+                        class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_groups', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             groups
                         </span>
@@ -29,8 +29,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('profile.profile', id=user.id, menu='settings') }}"
-                        class="d-flex nav-link align-items-center {% if menu_type == 'settings' %}active{% else %}link-body-emphasis{% endif %}">
+                    <a href="{{ url_for('profile.profile_settings', id=user.id) }}"
+                        class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_settings', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
                             settings
                         </span>
@@ -44,144 +44,8 @@
     </section>
     <div class="container ms-4">
 
-        {% if menu_type == "info" %}
-        <div class="d-flex flex-row">
-            <div class="d-flex flex-column mx-2">
-                <img src="{{ url_for('static', filename='images/users/{}.jpg'.format(user.login)) }}"
-                    class="rounded-3 mb-2 border border-secondary" style="width: 150px;" alt="Avatar" />
-
-
-                <label for="file-input" class="btn btn-outline-secondary">
-                    <input type="file" id="file-input" name="file-input" accept="image/png, image/jpeg"
-                        style="opacity: 0; position: absolute; height: 1px; width: 1px;" />
-                    Загрузить фото
-                </label>
-
-                <button type="button" class="btn btn-outline-warning mt-2" id="delete-photo-btn">Удалить фото</button>
-            </div>
-            <div class="mx-2">
-                <h1>{{ user.name }}</h1>
-                <p><small>здесь будет последняя активность</small></p>
-            </div>
-        </div>
-
-        {% elif menu_type == "groups" %}
-
-        <h1>Группы</h1>
-        <form class="d-flex input-group w-auto">
-            <input type="search" class="form-control" placeholder="Название группы/курса (пока не работает)"
-                aria-label="Search" aria-describedby="search-addon" />
-            <button class="input-group-text border-1">
-                <span class="material-symbols-outlined">
-                    search
-                </span>
-            </button>
-        </form>
-        <div class="custom-form content">
-            {% for group, value in groups.items() %}
-            <div class="card mt-2">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <h3>{{ group.title }}</h3>
-                        <div class="dropdown">
-                            <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
-                                <span class="material-symbols-outlined">
-                                    more_vert
-                                </span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#">Написать отзыв курсу</a></li>
-                                <li><a class="dropdown-item" href="#">Выйти из группы</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <span>Куратор: <a href="#" class="nounderline">{{ value[0][1] }}</a> </span> <br />
-                    <span>Курс: <a href="#" class="nounderline">{{ value[1][1] }}</a> </span> <br />
-                    <span>Студенты:
-                        {% for student in value[2] %}
-                        <a href="#" class="nounderline">{{ student.name }}</a>{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    </span> <br />
-                    <span>Ваш прогресс по курсу:</span>
-                    <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="{{value[3]}}"
-                        aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" style="width: {{ value[3] }}%"> {{value[3]}}% </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        {% elif menu_type == "settings" %}
-
-        <form method="POST" class="custom-form content" id="setting-form">
-            <p style="text-align: center; font-size: 30px;">Редактирование профиля</p>
-
-            <div class="row form-group align-items-center">
-                <div class="col-sm-2">
-                    <label for="input-name" class="col-form-label">Ваше имя</label>
-                </div>
-                <div class="col-sm-10">
-                    <input id="input-name" name="new-name" class="form-control" value="{{ user.name }}">
-                </div>
-            </div>
-
-            <div class="row form-group align-items-center">
-                <div class="col-sm-2">
-                    <label for="choice-score" class="col-form-label">Система оценивания</label>
-                </div>
-                <div class="col-sm-10">
-                    <select class="form-select form-control" id="choice-score" name="scoring-system" required>
-                        <option value="1" {% if user.scoring_system=='abstract' %} selected {% endif %}>Абстрактная
-                        </option>
-                        <option value="2" {% if user.scoring_system=='points' %} selected {% endif %}>Числовые значения
-                        </option>
-                    </select>
-                </div>
-            </div>
-
-            <p style="text-align: center; font-size: 30px;">Изменить пароль</p>
-
-            <div class="row form-group align-items-center">
-                <div class="col-sm-2">
-                    <label for="input-old-password" class="col-form-label">Старый пароль</label>
-                </div>
-                <div class="col-sm-10">
-                    <input type="password" id="input-old-password" name="old-password" class="form-control">
-                </div>
-            </div>
-            <div class="row form-group align-items-center">
-                <div class="col-sm-2">
-                    <label for="input-new-password" class="col-form-label">Новый пароль</label>
-                </div>
-                <div class="col-sm-10">
-                    <input type="password" id="input-new-password" name="new-password" class="form-control">
-                </div>
-            </div>
-            <div class="row form-group align-items-center">
-                <div class="col-sm-2">
-                    <label for="input-confirm-password" class="col-form-label">Повторите новый пароль</label>
-                </div>
-                <div class="col-sm-10">
-                    <input type="password" id="input-confirm-password" name="confirm-password" class="form-control">
-                </div>
-            </div>
-
-
-            <div class="row form-group">
-                <label class="col-sm-2 col-form-label">Баланс: {{user.balance}}</label>
-                <div class="col-sm-10">
-                    <button class="btn btn-secondary" href="#"> Пополнить баланс </button>
-                </div>
-            </div>
-
-            <div class="col-12">
-                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
-            </div>
-
-        </form>
-
-        {% endif %}
+        {% block profile_content %}
+        {% endblock %}
 
     </div>
 </div>
