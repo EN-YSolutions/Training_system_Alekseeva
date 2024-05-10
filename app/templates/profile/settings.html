@@ -27,6 +27,40 @@
         </div>
     </div>
 
+    <p style="text-align: center; font-size: 30px;">Личные данные</p>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-email" class="col-form-label">Почта</label>
+        </div>
+        <div class="col-sm-10">
+            <input id="input-email" name="new-email" class="form-control" value="{{ user_info.email }}">
+        </div>
+    </div>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-date" class="col-form-label">Дата рождения</label>
+        </div>
+        <div class="col-sm-10">
+            <input type="date" id="input-date" name="new-date" class="form-control" value="{{ user_info.birth_date.strftime('%Y-%m-%d') }}">
+        </div>
+    </div>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-address" class="col-form-label">Адрес</label>
+        </div>
+        <div class="col-sm-10">
+            <input id="input-address" name="new-address" class="form-control" value="{{ user_info.home_address }}">
+        </div>
+    </div>
+    <div class="row form-group align-items-center">
+        <div class="col-sm-2">
+            <label for="input-phone" class="col-form-label">Телефон</label>
+        </div>
+        <div class="col-sm-10">
+            <input type="tel" id="input-phone" name="new-phone" class="form-control" value="{{ user_info.phone_number }}">
+        </div>
+    </div>
+
     <p style="text-align: center; font-size: 30px;">Изменить пароль</p>
 
     <div class="row form-group align-items-center">
@@ -67,4 +101,40 @@
     </div>
 
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var settingsForm = document.getElementById('setting-form');
+
+        if (settingsForm) {
+            settingsForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(settingsForm);
+
+                fetch('/profile/update_settings', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+
+                        if (data.message && data.category) {
+
+                            showNotification(data.message, data.category);
+                        }
+
+                        document.getElementById('input-old-password').value = '';
+                        document.getElementById('input-new-password').value = '';
+                        document.getElementById('input-confirm-password').value = '';
+
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            });
+        }
+    });
+</script>
+
 {% endblock %}

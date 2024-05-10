@@ -15,6 +15,15 @@
     </div>
     <div class="mx-2">
         <h1>{{ user.name }}</h1>
+        {% if user_info.email %}
+        <p>e-mail: {{ user_info.email }}</p>
+        {% endif %}
+        {% if user_info.birth_date %}
+        <p>Дата рождения: {{ user_info.  }}</p>
+        {% endif %}
+        {% if user_info.phone_number %}
+        <p>Телефон: {{ user_info.phone_number }}</p>
+        {% endif %}
         <p><small>здесь будет последняя активность</small></p>
     </div>
 </div>

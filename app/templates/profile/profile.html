@@ -99,37 +99,6 @@
                     });
             });
         }
-
-        var settingsForm = document.getElementById('setting-form');
-
-        if (settingsForm) {
-            settingsForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                const formData = new FormData(settingsForm);
-
-                fetch('/profile/update_settings', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-
-                        if (data.message && data.category) {
-
-                            showNotification(data.message, data.category);
-                        }
-
-                        document.getElementById('input-old-password').value = '';
-                        document.getElementById('input-new-password').value = '';
-                        document.getElementById('input-confirm-password').value = '';
-
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    });
-            });
-        }
     });
 
 </script>

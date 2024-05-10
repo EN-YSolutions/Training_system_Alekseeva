@@ -2,11 +2,12 @@
 Определение маршрутов для страницы профиля веб-приложения.
 """
 from PIL import Image
+from re import fullmatch
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications
+from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
@@ -29,9 +30,11 @@ def profile_info(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
+    user_info = UsersInfo.query.filter_by(user_id=id).first()
+
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/info.html", user=current_user, unread=unread)
+    return render_template("profile/info.html", user=current_user, user_info=user_info, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/groups', methods=['GET', 'POST'])
@@ -71,9 +74,11 @@ def profile_settings(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
+    user_info = UsersInfo.query.filter_by(user_id=current_user.id).first()
+
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/settings.html", user=current_user, unread=unread)
+    return render_template("profile/settings.html", user=current_user, user_info=user_info, unread=unread)
 
 
 @profile_bp.route("/profile/<id>/notifications")
@@ -178,6 +183,7 @@ def update_settings():
         return redirect(url_for('auth.login'))
 
     scoring_system_names = {1: 'abstract', 2: 'points'}
+    email_regex = r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'
 
     try:
         new_name = request.form.get('new-name')
@@ -185,12 +191,36 @@ def update_settings():
         old_password = request.form.get('old-password')
         new_password = request.form.get('new-password')
         confirm_password = request.form.get('confirm-password')
+        email = request.form.get('new-email')
+        date = request.form.get('new-date')
+        address = request.form.get('new-address')
+        phone = request.form.get('new-phone')
+
+        current_user_info = UsersInfo.query.filter_by(user_id = current_user.id).first()
+        if not current_user_info:
+            current_user_info = UsersInfo(user_id = current_user.id)
+            db.session.add(current_user_info)
+            db.session.commit()
 
         if new_name and new_name != current_user.name:
             current_user.name = new_name
 
         if scoring_system_names.get(scoring_system, 'points') != current_user.scoring_system:
             current_user.scoring_system = scoring_system_names[scoring_system]
+
+        if not fullmatch(email_regex, email):
+            return jsonify({'category': 'warning', 'message': 'Почта скорей всего не валидна. Обратитесь к администратору.'})
+        elif email != current_user_info.email:
+            current_user_info.email = email
+
+        if date != str(current_user_info.birth_date):
+            current_user_info.birth_date = date
+
+        if address != current_user_info.home_address:
+            current_user_info.home_address = address
+
+        if phone != current_user_info.phone_number:
+            current_user_info.phone_number = phone
 
         if old_password:
             if check_password_hash(current_user.password, old_password):

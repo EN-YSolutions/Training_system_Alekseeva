@@ -34,9 +34,10 @@
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
                         <li><a class="dropdown-item"
-                                href="{{ url_for('profile.profile', id=user.id, menu='info') }}">Студент</a></li>
-                        <li><a class="dropdown-item" href="#">Сообщения</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Выход</a></li>
+                                href="{{ url_for('profile.profile', id=user.id, menu='info') }}"><i class="fa-solid fa-user"></i> Студент</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-message"></i> Сообщения</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-heart"></i> Избранные курсы</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Выход</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="{{ url_for('auth.login') }}">Вход</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('auth.register') }}">Регистрация</a></li>

@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.schema import Column, ForeignKey
 from sqlalchemy.types import String, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, NUMERIC
+from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, NUMERIC, DATE
 from app.extensions import db
 
 
@@ -24,6 +24,7 @@ class Users(UserMixin, db.Model):
     balance = Column(NUMERIC(19, 2), unique=False, nullable=False)
     scoring_system = Column(Enum("abstract", "points", name="score_type"), unique=False, nullable=False)
 
+    users_info = relationship("UsersInfo", backref="user", lazy=True)
     courses = relationship("Courses", backref="author", lazy=True)
     courses_feedbacks = relationship("Courses_feedbacks", backref="author", lazy=True)
     groups = relationship("Groups", backref="curator", lazy=True)
@@ -39,13 +40,26 @@ class Users(UserMixin, db.Model):
         return '<User: %r>' % self.id
     
 
+class UsersInfo(db.Model):
+    _tablename_ = 'users_info'
+
+    user_id = Column(UUID, ForeignKey("users.id"), primary_key=True, unique=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=True)
+    birth_date = Column(DATE, unique=False, nullable=True)
+    home_address = Column(String(511), unique=False, nullable=True)
+    phone_number = Column(String(32), unique=False, nullable=True)
+
+    def __repr__(self):
+        return '<UsersInfo: %r' % self.user_if
+
+
 class Courses(db.Model):
     __tablename__ = 'courses'
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     price = Column(NUMERIC(19, 2), unique=False, nullable=False)
-    title = Column(String(256), unique=False, nullable=False)
+    title = Column(String(255), unique=False, nullable=False)
     description = Column(Text, unique=False, nullable=True)
 
     courses_feedbacks = relationship("Courses_feedbacks", backref="course", lazy=True)
@@ -76,7 +90,7 @@ class Groups(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     course_id = Column(UUID, ForeignKey("courses.id"), nullable=False, unique=False)
     curator_id = Column(UUID, ForeignKey("users.id"), nullable=True, unique=False)
-    title = Column(String(256), unique=False, nullable=True)
+    title = Column(String(255), unique=False, nullable=True)
 
     deadlines = relationship("Deadlines", backref="group", lazy=True)
     groups_members = relationship("Groups_members", backref="group", lazy=True)
@@ -101,12 +115,13 @@ class Lessons(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     course_id = Column(UUID, ForeignKey("courses.id"), nullable=False, unique=False)
     teacher_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    title = Column(String(256), nullable=False, unique=False)
+    title = Column(String(255), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
 
     deadlines = relationship("Deadlines", backref="lesson", lazy=True)
     lessons_feedbacks = relationship("Lessons_feedbacks", backref="lesson", lazy=True)
     tasks = relationship("Tasks", backref="lesson", lazy=True)
+    file = relationship("Files", backref="lesson", lazy=True)
 
     def __repr__(self):
         return '<Lesson: %s>' % self.id 
@@ -141,10 +156,11 @@ class Tasks(db.Model):
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
-    title = Column(String(256), nullable=False, unique=False)
+    title = Column(String(255), nullable=False, unique=False)
     description = Column(Text, nullable=False, unique=False)
 
     hometasks = relationship("Hometasks", backref="task", lazy=True)
+    file = relationship("Files", backref="task", lazy=True)
 
     def __repr__(self):
         return '<Task: %s>' % self.id 
@@ -156,12 +172,27 @@ class Hometasks(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     task_id = Column(UUID, ForeignKey("tasks.id"), nullable=False, unique=False)
     student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    title = Column(String(256), nullable=False, unique=False)
+    title = Column(String(255), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
     status = Column(Enum("not completed", "pending", "needs revision", "correct", "incorrect", name = "task_status"), nullable=False, unique=False)
 
+    file = relationship("Files", backref="hometask", lazy=True)
+
     def __repr__(self):
         return '<Hometask: %s>' % self.id 
+
+
+class Files(db.Model):
+    __tablename__ = 'files'
+
+    id = Column(UUID, primary_key=True, unique=True, server_default=func.get_random_uuid())
+    name = Column(String(255), nullable=False, unique=False)
+    lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=True, unique=False)
+    task_id = Column(UUID, ForeignKey("tasks.id"), nullable=True, unique=False)
+    hometask_id = Column(UUID, ForeignKey("hometasks.id"), nullable=True, unique=False)
+
+    def __repr__(self):
+        return '<File: %s>' % self.id 
 
 
 class Notifications(db.Model):
@@ -169,7 +200,7 @@ class Notifications(db.Model):
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    title = Column(String(256), nullable=False, unique=False)
+    title = Column(String(255), nullable=False, unique=False)
     description = Column(Text, nullable=False, unique=False)
     unread = Column(Boolean, nullable=False, unique=False, default=True)
     date = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
