@@ -20,6 +20,15 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ url_for('profile.profile_courses', id=user.id) }}"
+                        class="d-flex nav-link align-items-center {% if request.path == url_for('profile.courses_taken', id=user.id) or request.path == url_for('profile.courses_favorites', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
+                        <span class="material-symbols-outlined me-1">
+                            school
+                        </span>
+                        Курсы
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url_for('profile.profile_groups', id=user.id) }}"
                         class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_groups', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
                         <span class="material-symbols-outlined me-1">
@@ -55,50 +64,54 @@
 
     document.addEventListener('DOMContentLoaded', function () {
 
-        var fileInput = document.getElementById('file-input');
-        if (fileInput) {
-            fileInput.addEventListener('change', function (event) {
-                var file = event.target.files[0];
-                if (file.type.startsWith('image/')) {
-                    var formData = new FormData();
-                    formData.append('image', file);
+        var FavoriteToggleLinks = document.querySelectorAll('.favorite_toggle')
+        FavoriteToggleLinks.forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault();
 
-                    fetch('/profile/upload_image', {
+                var courseId = link.getAttribute('data-course-id');
+                var toggleEvent = link.getAttribute('data-event');
+                
+                if (toggleEvent === 'add') {
+                    fetch('/profile/favorite_toggle', {
                         method: 'POST',
-                        body: formData
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            course_id: courseId
+                        })
                     })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Изображение успешно загружено');
+                            console.log('Курс добавлен в избранные');
+                        })
+                        .catch(error => {
+                            console.error('Ошибка на сервере:', error);
+                        });
+                } else if (toggleEvent === 'delete') {
+                    fetch('/profile/favorite_toggle', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            course_id: courseId
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Курс удален из избранных');
                             window.location.reload();
                         })
                         .catch(error => {
-                            console.error('Ошибка при загрузке изображения:', error);
+                            console.error('Ошибка на сервере:', error);
                         });
-
                 }
 
             });
-        }
-
-        var deletePhotoButton = document.getElementById('delete-photo-btn');
-
-        if (deletePhotoButton) {
-            deletePhotoButton.addEventListener('click', function (event) {
-
-                fetch('/profile/delete_image', {
-                    method: 'DELETE'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Изображение успешно удалено');
-                        window.location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Ошибка при удалении изображения:', error);
-                    });
-            });
-        }
+        });
+        
     });
 
 </script>

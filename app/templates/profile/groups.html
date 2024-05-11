@@ -19,22 +19,20 @@
             <span class="material-symbols-outlined"> more_vert </span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#">Написать отзыв курсу</a></li>
-            <li><a class="dropdown-item" href="#">Выйти из группы</a></li>
+            <li><button class="dropdown-item">Написать отзыв курсу</button></li>
+            <li><button class="dropdown-item favorite_toggle" data-course-id="{{ value[1][0] }}" data-event="add">Добавить курс в избранное</button></li>
+            <li><button class="dropdown-item">Выйти из группы</button></li>
           </ul>
         </div>
       </div>
-      {% if value[0] %}
       <span>
         Куратор: <a href="#" class="nounderline">{{ value[0][1] }}</a>
       </span>
       <br />
-      {% endif %}
       <span>
         Курс: <a href="#" class="nounderline search_field">{{ value[1][1] }}</a>
       </span>
       <br />
-      {% if value[2] %}
       <span>
         Студенты: 
         {% for student in value[2] %}
@@ -43,7 +41,6 @@
         {% endfor %}
       </span>
       <br />
-      {% endif %}
       <span>Ваш прогресс по курсу:</span>
       <div class="progress" role="progressbar" aria-label="Basic example" aria-valuenow="{{value[3]}}" aria-valuemin="0" aria-valuemax="100">
         <div class="progress-bar" style="width: {{ value[3] }}%">

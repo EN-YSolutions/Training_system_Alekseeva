@@ -1,0 +1,29 @@
+{% extends 'profile/courses.html' %} 
+
+{% block courses_content %}
+
+<div class="custom-form content" id="groups-container">
+    {% for course in courses %}
+    <div class="card mt-2 group-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h3 class="search_field"><a href="#" class="nounderline search_field">{{ course.title }}</a></h3>
+          <div class="dropdown">
+            <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
+              <span class="material-symbols-outlined"> more_vert </span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item favorite_toggle" data-course-id="{{ course.id }}" data-event="delete">Удалить из избранного</button></li>
+            </ul>
+          </div>
+        </div>
+        <p>{{ course.description }}</p>
+        <span>
+            Цена курса: {{ course.price }} руб.
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}

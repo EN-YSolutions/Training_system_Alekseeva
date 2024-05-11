@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files
+from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files, FavoritesCourses
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
@@ -42,9 +42,9 @@ def profile_groups(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
 
-    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all()
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id, Groups.title != None).all()
 
-    result = dict.fromkeys(db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all(), [])
+    result = dict.fromkeys(groups, [])
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
     for group in groups:
@@ -57,7 +57,7 @@ def profile_groups(id):
         result_list.append(db.session.query(Users.id, Users.name)
                 .join(Groups_members, Users.id == Groups_members.student_id)
                 .filter(Groups_members.group_id == group.id)
-                .all() if course.price != 0 else None)
+                .all())
         
         tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
         
@@ -79,6 +79,92 @@ def profile_settings(id):
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
     return render_template("profile/settings.html", user=current_user, user_info=user_info, unread=unread)
+
+
+@profile_bp.route('/profile/<id>/courses', methods=['GET'])
+def profile_courses(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    user = Users.query.filter_by(id=id).first()
+    # todo: добавить страницу с ошибкой "пользователь не найден"
+    if user is None:
+        user = current_user
+
+    return redirect(url_for('profile.courses_taken', id=user.id))
+
+
+@profile_bp.route('/profile/<id>/courses/taken', methods=['GET'])
+def courses_taken(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all()
+
+    result = dict.fromkeys(groups, [])
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    for group in groups:
+
+        result_list = []
+        
+        course = db.session.query(Courses).filter(Courses.id == group.course_id).first()
+        result_list.append((course.id, course.title, course.description))
+        
+        tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
+        
+        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
+
+        result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
+        result[group] = result_list
+
+    return render_template("profile/courses_taken.html", user=current_user, groups=result, unread=unread)
+
+
+@profile_bp.route('/profile/<id>/courses/favorites', methods=['GET'])
+def courses_favorites(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    courses = db.session.query(Courses).join(FavoritesCourses).filter(FavoritesCourses.user_id == id).all()
+
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    return render_template("profile/courses_favorites.html", user=current_user, courses=courses, unread=unread)
+
+
+@profile_bp.route("/profile/favorite_toggle", methods=['POST', 'DELETE'])
+def favorite_toggle():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+
+        data = request.get_json()
+        course_id = data.get('course_id')
+
+        if request.method == 'POST':
+            
+            new_fav_course = FavoritesCourses(
+                course_id=course_id,
+                user_id=current_user.id
+            )
+
+            db.session.add(new_fav_course)
+            db.session.commit()
+
+            return jsonify({'category': 'success', 'message': 'Курс добавлен в избранные'})
+        
+        elif request.method == 'DELETE':
+        
+            FavoritesCourses.query.filter(FavoritesCourses.course_id == course_id, FavoritesCourses.user_id == current_user.id).delete()
+            db.session.commit()
+
+            return jsonify({'category': 'success', 'message': 'Курс удален из избранных'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)})
 
 
 @profile_bp.route("/profile/<id>/notifications")

@@ -70,6 +70,16 @@ class Courses(db.Model):
         return '<Course: %r>' % self.id
 
 
+class FavoritesCourses(db.Model):
+    __tablename__ = 'favorites_courses'
+
+    course_id = Column(UUID, ForeignKey("courses.id"), primary_key=True, nullable=False, unique=False)
+    user_id = Column(UUID, ForeignKey("users.id"), primary_key=True, nullable=False, unique=False)
+
+    def __repr__(self):
+        return "<FavoritesCourses: %s - %s>" % self.course_id, self.user_id
+
+
 class Courses_feedbacks(db.Model):
     __tablename__ = 'courses_feedbacks'
 

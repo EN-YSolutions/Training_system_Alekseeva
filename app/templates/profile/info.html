@@ -19,7 +19,7 @@
         <p>e-mail: {{ user_info.email }}</p>
         {% endif %}
         {% if user_info.birth_date %}
-        <p>Дата рождения: {{ user_info.  }}</p>
+        <p>Дата рождения: {{ user_info.birth_date.strftime('%Y-%m-%d') }}</p>
         {% endif %}
         {% if user_info.phone_number %}
         <p>Телефон: {{ user_info.phone_number }}</p>
@@ -27,4 +27,55 @@
         <p><small>здесь будет последняя активность</small></p>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        var fileInput = document.getElementById('file-input');
+        if (fileInput) {
+            fileInput.addEventListener('change', function (event) {
+                var file = event.target.files[0];
+                if (file.type.startsWith('image/')) {
+                    var formData = new FormData();
+                    formData.append('image', file);
+
+                    fetch('/profile/upload_image', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Изображение успешно загружено');
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при загрузке изображения:', error);
+                        });
+
+                }
+
+            });
+        }
+
+        var deletePhotoButton = document.getElementById('delete-photo-btn');
+
+        if (deletePhotoButton) {
+            deletePhotoButton.addEventListener('click', function (event) {
+
+                fetch('/profile/delete_image', {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Изображение успешно удалено');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при удалении изображения:', error);
+                    });
+            });
+        }
+    });
+</script>
+
 {% endblock %}
