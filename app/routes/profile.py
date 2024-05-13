@@ -3,6 +3,8 @@
 """
 from PIL import Image
 from re import fullmatch
+from datetime import datetime
+from markupsafe import escape
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
@@ -161,6 +163,50 @@ def favorite_toggle():
             db.session.commit()
 
             return jsonify({'category': 'success', 'message': 'Курс удален из избранных'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)})
+
+
+@profile_bp.route("/profile/send_request", methods=["POST"])
+def send_request():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+
+        data = request.get_json()
+        course_id = data.get('course_id')
+        group_id = data.get('group_id')
+        message_text = escape(data.get('message_text'))
+        data_type = data.get('data_type')
+
+        group = Groups.query.filter_by(id = group_id).first()
+
+        # todo: заменить на placeholder группы
+        group_link = f'<a href="{url_for('profile.profile_info', id=current_user.id)}">{group.title}</a>'
+        user_link = f'<a href="{url_for('profile.profile_info', id=current_user.id)}">{current_user.name}</a>'
+
+        if data_type == "adviceModal":
+            title = "Запрос консультации"
+            notification_text = f'Пользователь {user_link} из группы {group_link} запрашивает консультацию. <br /> Текст сообщения: {message_text}'
+        elif data_type == "individualModal":
+            title = "Запрос индивидуального графика"
+            notification_text = f'Пользователь {user_link} из группы {group_link} запрашивает индивидуальный график обучения. <br /> Текст сообщения {message_text}'
+
+        new_notify = Notifications(
+            user_id=group.curator_id,
+            title=title,
+            description=notification_text,
+            date=datetime.now()
+        )
+
+        db.session.add(new_notify)
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Запрос отправлен'})
+        
 
     except Exception as e:
         db.session.rollback()

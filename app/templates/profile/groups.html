@@ -21,10 +21,61 @@
           <ul class="dropdown-menu dropdown-menu-end">
             <li><button class="dropdown-item">Написать отзыв курсу</button></li>
             <li><button class="dropdown-item favorite_toggle" data-course-id="{{ value[1][0] }}" data-event="add">Добавить курс в избранное</button></li>
+            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#adviceModal_{{ group.id }}">Запросить консультацию</button></li>
+            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#individualModal_{{ group.id }}">Запросить индивидуальный график обучения</button></li>
             <li><button class="dropdown-item">Выйти из группы</button></li>
           </ul>
         </div>
       </div>
+
+      <div class="modal fade" id="adviceModal_{{ group.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="staticBackdropLabel">Запрос консультации</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p> Ваше имя: {{ user.name }} </p>
+              <p> Ваша группа: {{ group.title }} </p>
+              <p> Курс: {{ value[1][1] }} </p>
+              <div>
+                <label for="message-text" class="col-form-label">Опишите запрос:</label>
+                <textarea class="form-control" id="message-text"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+              <button type="button" class="btn btn-primary send-button" data-bs-dismiss="modal" data-group-id="{{ group.id }}" data-course-id="{{ value[1][0] }}" data-type="adviceModal">Отправить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="individualModal_{{ group.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="staticBackdropLabel">Запрос индивидуального графика</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p> Ваше имя: {{ user.name }} </p>
+              <p> Ваша группа: {{ group.title }} </p>
+              <p> Курс: {{ value[1][1] }} </p>
+              <div>
+                <label for="message-text" class="col-form-label">Опишите причины запроса:</label>
+                <textarea class="form-control" id="message-text"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+              <button type="button" class="btn btn-primary send-button" data-bs-dismiss="modal" data-group-id="{{ group.id }}" data-course-id="{{ value[1][0] }}" data-type="individualModal">Отправить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <span>
         Куратор: <a href="#" class="nounderline">{{ value[0][1] }}</a>
       </span>
@@ -50,11 +101,29 @@
     </div>
   </div>
   {% endfor %}
+
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="successModalLabel">Сообщение отправлено</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Ваше сообщение было успешно отправлено куратору группы.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var searchInput = document.getElementById('search-input')
+        var searchInput = document.getElementById('search-input');
         var groupsContainer = document.getElementById('groups-container');
 
         searchInput.addEventListener("input", function() {
@@ -80,6 +149,43 @@
             }
 
         });
+
+        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+        var sendButtons = document.querySelectorAll('.send-button')
+        sendButtons.forEach(button => {
+          button.addEventListener('click', event => {
+            event.preventDefault();
+
+            var modalContent = event.target.closest('.modal-content');
+            var messageText = modalContent.querySelector('textarea').value;
+            var groupId = button.getAttribute('data-group-id');
+            var courseId = button.getAttribute('data-course-id');
+
+
+            fetch('/profile/send_request', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                group_id: groupId,
+                course_id: courseId,        
+                message_text: messageText,
+                data_type: button.getAttribute('data-type')
+              })
+            })
+              .then(response => response.json())
+              .then(data => {
+                successModal.show();
+              })
+              .catch(error => {
+                console.error('Ошибка на сервере:', error);
+              });
+
+          });
+        });
+
     });
 </script>
 

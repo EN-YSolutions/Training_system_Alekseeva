@@ -23,11 +23,11 @@
             </div>
         </div>
         <div class="card-body">
-            <p>{{ notification.description }}</p>
+            <p>{{ notification.description |safe }}</p>
 
         </div>
         <div class="card-footer text-body-secondary">
-            {{ notification.date }}
+            {{ notification.date.strftime("%d.%m.%Y %H:%M") }}
         </div>
     </div>
     {% endfor %}

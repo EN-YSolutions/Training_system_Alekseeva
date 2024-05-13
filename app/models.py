@@ -6,7 +6,7 @@
 
 from flask_login import UserMixin
 from sqlalchemy import func
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.schema import Column, ForeignKey, UniqueConstraint
 from sqlalchemy.types import String, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, NUMERIC, DATE
@@ -184,7 +184,9 @@ class Hometasks(db.Model):
     student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
     title = Column(String(255), nullable=False, unique=False)
     text = Column(Text, nullable=False, unique=False)
-    status = Column(Enum("not completed", "pending", "needs revision", "correct", "incorrect", name = "task_status"), nullable=False, unique=False)
+    status = Column(Enum("pending", "needs revision", "correct", "incorrect", name = "task_status"), nullable=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(task_id, student_id),)
 
     file = relationship("Files", backref="hometask", lazy=True)
 
