@@ -46,7 +46,7 @@ def profile_groups(id):
 
     user = Users.query.filter_by(id=id).first()
 
-    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id, Groups.title != None).all()
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == user.id, Groups.title != None).all()
 
     result = dict.fromkeys(groups, [])
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
@@ -65,7 +65,8 @@ def profile_groups(id):
         
         tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
         
-        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
+        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == user.id, Hometasks.task_id == task.id).first() for task in tasks]
+        tasks_status = [status[0] if status else "pending" for status in tasks_status]
 
         result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
         result[group] = result_list

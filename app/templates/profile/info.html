@@ -5,13 +5,16 @@
     <div class="d-flex flex-column mx-2">
         <img src="{{ url_for('static', filename='images/users/{}.jpg'.format(user.login)) }}"
             class="rounded-3 mb-2 border border-secondary" style="width: 150px;" alt="Avatar" />
+
+        {% if current_user.id == user.id %}
         <label for="file-input" class="btn btn-outline-secondary">
             <input type="file" id="file-input" name="file-input" accept="image/png, image/jpeg"
                 style="opacity: 0; position: absolute; height: 1px; width: 1px;" />
             Загрузить фото
         </label>
-
         <button type="button" class="btn btn-outline-warning mt-2" id="delete-photo-btn">Удалить фото</button>
+        {% endif %}
+
     </div>
     <div class="mx-2">
         <h1>{{ user.name }}</h1>
