@@ -8,6 +8,7 @@
       <div class="card-body">
         <div class="d-flex justify-content-between">
           <h3 class="search_field"><a href="#" class="nounderline search_field">{{ course.title }}</a></h3>
+          {% if current_user.id == user.id %}
           <div class="dropdown">
             <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
               <span class="material-symbols-outlined"> more_vert </span>
@@ -16,6 +17,7 @@
               <li><button class="dropdown-item favorite_toggle" data-course-id="{{ course.id }}" data-event="delete">Удалить из избранного</button></li>
             </ul>
           </div>
+          {% endif %}
         </div>
         <p>{{ course.description }}</p>
         <span>

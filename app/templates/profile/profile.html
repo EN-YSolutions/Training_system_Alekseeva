@@ -37,6 +37,7 @@
                         Группы
                     </a>
                 </li>
+                {% if current_user.id == user.id %}
                 <li>
                     <a href="{{ url_for('profile.profile_settings', id=user.id) }}"
                         class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_settings', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
@@ -46,6 +47,7 @@
                         Настройки
                     </a>
                 </li>
+                {% endif %}
 
             </ul>
 

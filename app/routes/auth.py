@@ -50,7 +50,7 @@ def login():
             db.session.rollback() 
             print(str(e))
 
-    return render_template('auth/login.html', user=current_user, form=form)
+    return render_template('auth/login.html', current_user=current_user, form=form)
 
 
 @auth_bp.route('/register', methods=['POST', 'GET'])
@@ -96,7 +96,7 @@ def register():
             db.session.rollback() 
             print(str(e))
 
-    return render_template('auth/register.html', user=current_user, form=form)
+    return render_template('auth/register.html', current_user=current_user, form=form)
 
 
 @auth_bp.route('/logout')

@@ -18,4 +18,4 @@ def index():
     
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all()) if current_user.is_authenticated else 0
 
-    return render_template("main/index.html", user=current_user, unread=unread)
+    return render_template("main/index.html", current_user=current_user, unread=unread)

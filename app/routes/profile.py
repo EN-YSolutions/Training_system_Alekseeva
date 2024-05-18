@@ -32,17 +32,19 @@ def profile_info(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
+    user = Users.query.filter_by(id=id).first()
+    
     user_info = UsersInfo.query.filter_by(user_id=id).first()
 
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/info.html", user=current_user, user_info=user_info, unread=unread)
+    return render_template("profile/info.html", current_user=current_user, user=user, user_info=user_info, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/groups', methods=['GET', 'POST'])
 def profile_groups(id):
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
 
     groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id, Groups.title != None).all()
 
@@ -68,19 +70,24 @@ def profile_groups(id):
         result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
         result[group] = result_list
     
-    return render_template("profile/groups.html", user=current_user, groups=result, unread=unread)
+    return render_template("profile/groups.html", current_user=current_user, user=user, groups=result, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/settings', methods=['GET', 'POST'])
 def profile_settings(id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
-    
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+
     user_info = UsersInfo.query.filter_by(user_id=current_user.id).first()
 
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/settings.html", user=current_user, user_info=user_info, unread=unread)
+    return render_template("profile/settings.html", current_user=current_user, user=user, user_info=user_info, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/courses', methods=['GET'])
@@ -98,10 +105,10 @@ def profile_courses(id):
 
 @profile_bp.route('/profile/<id>/courses/taken', methods=['GET'])
 def courses_taken(id):
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
-    
-    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == current_user.id).all()
+
+    user = Users.query.filter_by(id=id).first()
+
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == user.id).all()
 
     result = dict.fromkeys(groups, [])
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
@@ -114,25 +121,26 @@ def courses_taken(id):
         result_list.append((course.id, course.title, course.description))
         
         tasks = db.session.query(Tasks).join(Lessons, Lessons.id == Tasks.lesson_id).filter(Lessons.course_id == course.id).all()
-        
-        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == current_user.id, Hometasks.task_id == task.id).first()[0] for task in tasks]
+
+        tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == user.id, Hometasks.task_id == task.id).first() for task in tasks]
+        tasks_status = [status[0] if status else "pending" for status in tasks_status]        
 
         result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
         result[group] = result_list
 
-    return render_template("profile/courses_taken.html", user=current_user, groups=result, unread=unread)
+    return render_template("profile/courses_taken.html", current_user=current_user, user=user, groups=result, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/courses/favorites', methods=['GET'])
 def courses_favorites(id):
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+    
+    user = Users.query.filter_by(id=id).first()
     
     courses = db.session.query(Courses).join(FavoritesCourses).filter(FavoritesCourses.user_id == id).all()
 
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/courses_favorites.html", user=current_user, courses=courses, unread=unread)
+    return render_template("profile/courses_favorites.html", current_user=current_user, user=user, courses=courses, unread=unread)
 
 
 @profile_bp.route("/profile/favorite_toggle", methods=['POST', 'DELETE'])
@@ -224,7 +232,7 @@ def notifications(id):
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
     notifications = db.session.query(Notifications).filter(Notifications.user_id == current_user.id).all()
 
-    return render_template("profile/notifications.html", user=current_user, notifications=notifications, unread=unread)
+    return render_template("profile/notifications.html", current_user=current_user, notifications=notifications, unread=unread)
 
 
 @profile_bp.route("/profile/notification_status", methods=['POST'])
@@ -328,6 +336,7 @@ def update_settings():
         address = request.form.get('new-address')
         phone = request.form.get('new-phone')
 
+        # todo: перенести в регистрацию       
         current_user_info = UsersInfo.query.filter_by(user_id = current_user.id).first()
         if not current_user_info:
             current_user_info = UsersInfo(user_id = current_user.id)
