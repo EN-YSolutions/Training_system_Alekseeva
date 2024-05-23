@@ -20,7 +20,7 @@ class Users(UserMixin, db.Model):
     login = Column(String(32), unique=True, nullable=False)
     password = Column(String(60), unique=False, nullable=False)
     role = Column(Enum("admin", "curator", "teacher", "student", name="user_role"), unique=False, nullable=False)
-    name = Column(Text, unique=False, nullable=False)
+    name = Column(String(255), unique=False, nullable=False)
     balance = Column(NUMERIC(19, 2), unique=False, nullable=False)
     scoring_system = Column(Enum("abstract", "points", name="score_type"), unique=False, nullable=False)
 
@@ -116,7 +116,7 @@ class Groups_members(db.Model):
     student_id = Column(UUID, ForeignKey("users.id"), primary_key=True, nullable=False, unique=False)
 
     def __repr__(self):
-        return "<Groups_users: %s - %s>" % self.group_id, self.student_id
+        return "<Groups_users: %s - %s>" % (self.group_id, self.student_id)
     
 
 class Lessons(db.Model):
@@ -145,7 +145,7 @@ class Deadlines(db.Model):
     deadline = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
 
     def __repr__(self):
-        return '<Deadline: %r>' % self.id
+        return '<Deadline: %s - %s>' % (self.group_id, self.lesson_id)
 
 
 class Lessons_feedbacks(db.Model):

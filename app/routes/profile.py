@@ -1,15 +1,17 @@
 """
 Определение маршрутов для страницы профиля веб-приложения.
 """
+import os
 from PIL import Image
 from re import fullmatch
 from datetime import datetime
 from markupsafe import escape
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, current_app
 from flask_login import current_user
 from flask_bcrypt import check_password_hash
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files, FavoritesCourses
+from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files, FavoritesCourses, Deadlines
 from app.extensions import bcrypt, db
 from app.static.python.identicons import generate_avatar
 
@@ -142,6 +144,203 @@ def courses_favorites(id):
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
     return render_template("profile/courses_favorites.html", current_user=current_user, user=user, courses=courses, unread=unread)
+
+
+# todo: сортировка по deadline, разное отображение заданий, написание домашних заданий. если на "на проверке" - возможность отозвать задание
+@profile_bp.route("/profile/<id>/tasks", methods=["GET"])
+def profile_tasks(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    user = Users.query.filter_by(id=id).first()
+    # todo: добавить страницу с ошибкой "пользователь не найден"
+    if user is None:
+        user = current_user
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+
+    return redirect(url_for('profile.tasks_pending', id=user.id))
+
+
+@profile_bp.route("/profile/<id>/tasks/pending", methods=["GET"])
+def tasks_pending(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+    
+    tasks = db.session.query(Tasks).join(Lessons, Tasks.lesson_id == Lessons.id).join(Courses, Lessons.course_id == Courses.id).join(Groups, Groups.course_id == Courses.id).join(Groups_members, Groups_members.group_id == Groups.id).filter(Groups_members.student_id == id).all()
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    tasks_info = {}
+
+    for task in tasks:
+        lesson = db.session.query(Lessons).filter_by(id=task.lesson_id).first()
+
+        course = db.session.query(Courses).filter_by(id=lesson.course_id).first()
+
+        group = db.session.query(Groups).join(Groups_members, Groups.id == Groups_members.group_id).filter(Groups.course_id == course.id, Groups_members.student_id == id).first()
+
+        deadlines = db.session.query(Deadlines).filter_by(group_id=group.id, lesson_id=lesson.id).first()
+
+        hometasks = db.session.query(Hometasks).filter_by(task_id=task.id, student_id=id, status="pending").first()  
+
+        if hometasks:  
+            tasks_info[task] = (course, lesson, deadlines, hometasks)
+    
+    return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
+
+
+@profile_bp.route("/profile/<id>/tasks/revision", methods=["GET"])
+def tasks_revision(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+    
+    tasks = db.session.query(Tasks).join(Lessons, Tasks.lesson_id == Lessons.id).join(Courses, Lessons.course_id == Courses.id).join(Groups, Groups.course_id == Courses.id).join(Groups_members, Groups_members.group_id == Groups.id).filter(Groups_members.student_id == id).all()
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    tasks_info = {}
+
+    for task in tasks:
+        lesson = db.session.query(Lessons).filter_by(id=task.lesson_id).first()
+
+        course = db.session.query(Courses).filter_by(id=lesson.course_id).first()
+
+        group = db.session.query(Groups).join(Groups_members, Groups.id == Groups_members.group_id).filter(Groups.course_id == course.id, Groups_members.student_id == id).first()
+
+        deadlines = db.session.query(Deadlines).filter_by(group_id=group.id, lesson_id=lesson.id).first()
+
+        hometasks = db.session.query(Hometasks).filter_by(task_id=task.id, student_id=id, status="needs revision").first()  
+
+        if hometasks:  
+            tasks_info[task] = (course, lesson, deadlines, hometasks)
+    
+    return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
+
+
+@profile_bp.route("/profile/<id>/tasks/done", methods=["GET"])
+def tasks_done(id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+    
+    tasks = db.session.query(Tasks).join(Lessons, Tasks.lesson_id == Lessons.id).join(Courses, Lessons.course_id == Courses.id).join(Groups, Groups.course_id == Courses.id).join(Groups_members, Groups_members.group_id == Groups.id).filter(Groups_members.student_id == id).all()
+    
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+    tasks_info = {}
+
+    for task in tasks:
+        lesson = db.session.query(Lessons).filter_by(id=task.lesson_id).first()
+
+        course = db.session.query(Courses).filter_by(id=lesson.course_id).first()
+
+        group = db.session.query(Groups).join(Groups_members, Groups.id == Groups_members.group_id).filter(Groups.course_id == course.id, Groups_members.student_id == id).first()
+
+        deadlines = db.session.query(Deadlines).filter_by(group_id=group.id, lesson_id=lesson.id).first()
+
+        hometasks = db.session.query(Hometasks).filter(Hometasks.task_id==task.id, Hometasks.student_id==id, Hometasks.status.in_(["correct", "incorrect"])).first()  
+
+        if hometasks:  
+            tasks_info[task] = (course, lesson, deadlines, hometasks)
+    
+    return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
+
+
+@profile_bp.route("/profile/<id>/hometask/<task_id>", methods=["GET"])
+def profile_hometask(id, task_id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+        
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
+
+
+    hometask = db.session.query(Hometasks).filter_by(id=task_id).first()
+    hometask_file = db.session.query(Files).filter_by(hometask_id=hometask.id).first()
+    task = db.session.query(Tasks).filter_by(id=hometask.task_id).first()
+    task_file = db.session.query(Files).filter_by(task_id=task.id).first()
+    
+    return render_template("profile/hometask.html", current_user=current_user, user=user, task=task, task_file=task_file, hometask=hometask, hometask_file=hometask_file, unread=unread)
+
+
+@profile_bp.route("/profile/save_hometask", methods=["POST"])
+def save_hometask():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    try:
+        hometask_id = request.form['hometask_id']
+        hometask_file_id = request.form.get('hometask_file_id')
+        title = request.form['title']
+        text = request.form['text']
+        h_file = request.files.get('file')
+        
+        if h_file:
+            if hometask_file_id:
+                db_file = db.session.query(Files).filter_by(id=hometask_file_id).first()
+                db_file.name=h_file.filename
+                db.session.commit()
+                h_file.save(os.path.join(current_app.root_path, "static", "files", str(db_file.id)))
+
+            else:
+                new_file = Files(
+                    name=h_file.filename,
+                    hometask_id=hometask_id
+                )
+                db.session.add(new_file)
+                db.session.commit()
+                h_file.save(os.path.join(current_app.root_path, "static", "files", str(new_file.id)))
+
+        db_hometask = db.session.query(Hometasks).filter_by(id=hometask_id).first()
+        db_hometask.title = title
+        db_hometask.text = text
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Домашнее задание сохранено'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
+
+
+@profile_bp.route("/profile/download_file/<file_id>", methods=["GET"])
+def download_file(file_id):
+    try:
+        file_record = db.session.query(Files).filter_by(id=file_id).first()
+        if not file_record:
+            return jsonify({'category': 'danger', 'message': 'Файл не найден'})
+        
+        file_path = os.path.join(current_app.root_path, "static", "files", str(file_id))
+
+        if not os.path.exists(file_path):
+            return jsonify({'category': 'danger', 'message': 'Файл не найден на сервере'})
+
+        return send_file(file_path, as_attachment=True, download_name=file_record.name)
+
+    except Exception as e:
+        print(str(e))
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
 @profile_bp.route("/profile/favorite_toggle", methods=['POST', 'DELETE'])

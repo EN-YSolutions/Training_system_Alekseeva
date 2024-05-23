@@ -28,6 +28,17 @@
                         Курсы
                     </a>
                 </li>
+                {% if current_user.id == user.id %}
+                <li>
+                    <a href="{{ url_for('profile.profile_tasks', id=user.id) }}"
+                        class="d-flex nav-link align-items-center {% if request.path == url_for('profile.tasks_pending', id=user.id) or request.path == url_for('profile.tasks_revision', id=user.id) or request.path == url_for('profile.tasks_done', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">
+                        <span class="material-symbols-outlined me-1">
+                            task
+                        </span>
+                        Задания
+                    </a>
+                </li>
+                {% endif %}
                 <li>
                     <a href="{{ url_for('profile.profile_groups', id=user.id) }}"
                         class="d-flex nav-link align-items-center {% if request.path == url_for('profile.profile_groups', id=user.id) %}active{% else %}link-body-emphasis{% endif %}">

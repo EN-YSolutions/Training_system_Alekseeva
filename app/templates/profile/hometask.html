@@ -1,0 +1,93 @@
+{% extends 'profile/profile.html' %} 
+
+{% block profile_content %}
+
+<h3>{{ task.title }}</h3>
+<p>{{ task.description }}</p>
+{% if task_file %}
+<div class="mb-3">
+    <label>Прикрепленный файл:</label>
+    <div class="attached-file">
+        <a href="{{ url_for('profile.download_file', file_id=task_file.id|string)  }}">
+            <i class="fa-solid fa-file-arrow-down"></i> {{ task_file.name }}
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<h3>Домашнее задание</h3>
+<form method="POST" id="hometask-form">
+    <div class="card-body">
+        <input type="hidden" name="hometask_id" value="{{ hometask.id|string }}">
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" name="title" placeholder="Заголовок" value="{{ hometask.title }}" required autocomplete="off">
+            <label>Заголовок</label>
+        </div>
+        <div class="form-floating mb-3">
+            <textarea class="form-control auto-resize" name="text" placeholder="Текст" required autocomplete="off" oninput="autoResizeTextarea(this)">{{ hometask.text }}</textarea>
+            <label>Текст</label>
+        </div>
+        {% if hometask_file %}
+        <input type="hidden" name="hometask_file_id" value="{{ hometask_file.id|string }}">
+        <div class="mb-3">
+            <label>Прикрепленный файл:</label>
+            <div class="attached-file">
+                <a href="{{ url_for('profile.download_file', file_id=hometask_file.id|string) }}">
+                    <i class="fa-solid fa-file-arrow-down"></i> {{ hometask_file.name }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        <div class="input-group mb-3">
+            <input type="file" class="form-control" id="inputFile" name="file">
+        </div>
+    </div>
+    <div class="card-footer">
+        <button type="submit" class="btn btn-outline-success">Сохранить</button>
+    </div>
+</form>
+
+<script>
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 2 + 'px';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.auto-resize').forEach(function(textarea) {
+            autoResizeTextarea(textarea);
+        });
+
+        var hometaskForm = document.getElementById('hometask-form');
+
+        if (hometaskForm) {
+            hometaskForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const formData = new FormData(hometaskForm);
+
+                fetch('/profile/save_hometask', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+
+                        if (data.message && data.category) {
+
+                            showNotification(data.message, data.category);
+                        }
+
+                        
+
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            });
+        }
+
+    });
+</script>
+
+{% endblock %}
