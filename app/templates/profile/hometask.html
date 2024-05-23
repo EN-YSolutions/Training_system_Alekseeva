@@ -8,7 +8,7 @@
 <div class="mb-3">
     <label>Прикрепленный файл:</label>
     <div class="attached-file">
-        <a href="{{ url_for('profile.download_file', file_id=task_file.id|string)  }}">
+        <a href="{{ url_for('static', filename='files/' + task_file.id|string) }}" download="{{ task_file.name }}">
             <i class="fa-solid fa-file-arrow-down"></i> {{ task_file.name }}
         </a>
     </div>
@@ -32,7 +32,7 @@
         <div class="mb-3">
             <label>Прикрепленный файл:</label>
             <div class="attached-file">
-                <a href="{{ url_for('profile.download_file', file_id=hometask_file.id|string) }}">
+                <a href="{{ url_for('static', filename='files/' + hometask_file.id|string) }}" download="{{ hometask_file.name }}">
                     <i class="fa-solid fa-file-arrow-down"></i> {{ hometask_file.name }}
                 </a>
             </div>

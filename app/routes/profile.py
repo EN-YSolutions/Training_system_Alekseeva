@@ -324,25 +324,6 @@ def save_hometask():
         return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
-@profile_bp.route("/profile/download_file/<file_id>", methods=["GET"])
-def download_file(file_id):
-    try:
-        file_record = db.session.query(Files).filter_by(id=file_id).first()
-        if not file_record:
-            return jsonify({'category': 'danger', 'message': 'Файл не найден'})
-        
-        file_path = os.path.join(current_app.root_path, "static", "files", str(file_id))
-
-        if not os.path.exists(file_path):
-            return jsonify({'category': 'danger', 'message': 'Файл не найден на сервере'})
-
-        return send_file(file_path, as_attachment=True, download_name=file_record.name)
-
-    except Exception as e:
-        print(str(e))
-        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
-
-
 @profile_bp.route("/profile/favorite_toggle", methods=['POST', 'DELETE'])
 def favorite_toggle():
     if not current_user.is_authenticated:
