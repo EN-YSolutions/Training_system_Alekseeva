@@ -18,14 +18,17 @@
     </div>
     <div class="mx-2">
         <h1>{{ user.name }}</h1>
-        {% if user_info.email %}
-        <p>e-mail: {{ user_info.email }}</p>
-        {% endif %}
-        {% if user_info.birth_date %}
-        <p>Дата рождения: {{ user_info.birth_date.strftime('%Y-%m-%d') }}</p>
-        {% endif %}
-        {% if user_info.phone_number %}
-        <p>Телефон: {{ user_info.phone_number }}</p>
+        {% if user_certificates %}
+        <h2>Сертификаты</h2>
+        {% for certificate in user_certificates %}
+        <ul class="list-group">
+            <li class="list-group-item d-flex align-items-center mb-3">
+                <img src="{{ url_for('static', filename='images/certificate-icon.png') }}" 
+                     class="me-2" style="width: 24px; height: 24px;" alt="Certificate Icon" />
+                {{ certificate.title }}
+            </li>
+        </ul>
+        {% endfor %}
         {% endif %}
     </div>
 </div>

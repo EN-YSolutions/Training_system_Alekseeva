@@ -2,10 +2,6 @@
 
 {% block content %}
 
-<div id="notification-container" class="m-auto"></div>
-<br />
-
-
 <div class="d-flex align-items-stretch">
     <section class="left-sidebar p-1">
         <div class="" style="width: 280px;">
@@ -97,7 +93,11 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Курс добавлен в избранные');
+                            if (data.category != 'success') {
+                                showNotification(data.message, data.category);
+                            } else {
+                                window.location.reload();
+                            }
                         })
                         .catch(error => {
                             console.error('Ошибка на сервере:', error);
@@ -114,8 +114,11 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Курс удален из избранных');
-                            window.location.reload();
+                            if (data.category != 'success') {
+                                showNotification(data.message, data.category);
+                            } else {
+                                window.location.reload();
+                            }
                         })
                         .catch(error => {
                             console.error('Ошибка на сервере:', error);

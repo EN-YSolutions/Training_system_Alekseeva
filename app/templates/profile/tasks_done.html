@@ -8,23 +8,11 @@
       <div class="card-body">
         <div class="d-flex justify-content-between">
           <h3 class="search_field"><a href="#" class="nounderline search_field">{{ task.title }}</a></h3>
-          <div class="dropdown">
-            <button class="btn btn-link pull-right nav-link" data-bs-toggle="dropdown">
-              <span class="material-symbols-outlined"> more_vert </span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><button class="dropdown-item">Отправить домашнее задание</button></li>
-            </ul>
-          </div>
         </div>
         <span>Курс: {{ value[0].title }}<span><br />
         <span>Урок: {{ value[1].title }}</span><br />
-        {% if value[2] %}
-        <span>Дата сдачи: {{ value[2].deadline.strftime('%Y-%m-%d %H:%M') }}</span><br />
-        {% else %}
-        <span>Дата сдачи отсутствует</span><br />
-        {% endif %}
-        <span>Домашнее задание: <a href="#">{{ value[3].title }}</a></span>
+        <span>Результат: {% if value[3].status == 'correct' %} зачтено {% else %} не зачтено {% endif %} </span><br />
+        <span>Домашнее задание: <a href="{{ url_for('profile.profile_hometask_view', id=current_user.id, task_id=value[3].id) }}">{{ value[3].title }}</a></span>
       </div>
     </div>
     {% endfor %}

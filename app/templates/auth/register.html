@@ -2,34 +2,43 @@
 
 {% block content %}
 
-{% with messages=get_flashed_messages(with_categories=true) %}
-<br />
-{% for category, message in messages %}
-<div class='alert alert-{{category}} text-center alert-dismissible fade show m-auto'>
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endfor %}
-{% endwith %}
-
-<br />
-
-<form method="POST">
-    {{form.hidden_tag()}}
-
-    {{form.user_name.label(class="form-label")}}
-    {{form.user_name(class="form-control")}}
-    {{form.user_login.label(class="form-label")}}
-    {{form.user_login(class="form-control")}}
-    {{form.user_password.label(class="form-label")}}
-    {{form.user_password(class="form-control")}}
-    {{form.user_cpassword.label(class="form-label")}}
-    {{form.user_cpassword(class="form-control")}}
-    {% for error in form.user_cpassword.errors %}
-    {{ error }}
-    {% endfor%}
-    <br />
-    {{form.submit(class="btn btn-secondary")}}
+<form id="register-form">
+    <label class="form-label" for="name">Имя</label>
+    <input class="form-control" id="name" name="name" required="" type="text" value="">
+    <label class="form-label" for="login">Логин</label>
+    <input class="form-control" id="login" name="login" required="" type="text" value="">
+    <label class="form-label" for="password">Пароль</label>
+    <input class="form-control" id="password" name="password" required="" type="password" value="">
+    <label class="form-label" for="cpassword">Пароль</label>
+    <input class="form-control" id="cpassword" name="cpassword" required="" type="password" value="">   
+    <br>
+    <input class="btn btn-secondary" id="submit" name="submit" type="submit" value="Зарегистрироваться">
 </form>
+
+<script>
+    document.getElementById('register-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+    
+        var formData = new FormData(this); 
+    
+        fetch('/register', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.category != 'success') {
+                showNotification(data.message, data.category);
+            } else {
+                window.location.href = data.redirect_url;
+            }
+
+        })
+        .catch(error => {
+            console.error('Ошибка на сервере:', error);
+        });
+    });
+</script>
 
 {% endblock %}

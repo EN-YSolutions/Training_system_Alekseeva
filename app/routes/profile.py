@@ -6,13 +6,11 @@ from PIL import Image
 from re import fullmatch
 from datetime import datetime
 from markupsafe import escape
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app
 from flask_login import current_user
-from flask_bcrypt import check_password_hash
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.models import Groups_members, Groups, Users, Courses, Lessons, Tasks, Hometasks, Notifications, UsersInfo, Files, FavoritesCourses, Deadlines
-from app.extensions import bcrypt, db
+from app.extensions import db
 from app.static.python.identicons import generate_avatar
 
 profile_bp = Blueprint('profile', __name__)
@@ -40,7 +38,33 @@ def profile_info(id):
 
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
-    return render_template("profile/info.html", current_user=current_user, user=user, user_info=user_info, unread=unread)
+    groups = db.session.query(Groups).join(Groups_members).filter(Groups_members.student_id == user.id, Groups.title != None).all()
+
+    user_certificates = []
+
+    for group in groups:
+        course = db.session.query(Courses).filter(Courses.id == group.course_id).first()
+        lessons = db.session.query(Lessons).filter(Lessons.course_id == course.id).all()
+        tasks = []
+        all_tasks_correct = True
+
+        for lesson in lessons:
+            tasks += db.session.query(Tasks).filter(Tasks.lesson_id == lesson.id).all()
+
+        for task in tasks:
+            hometask = db.session.query(Hometasks).filter(Hometasks.task_id == task.id, Hometasks.student_id == id).first()
+            
+            if not hometask or hometask.status not in ["correct", "incorrect"]:
+                all_tasks_correct = False
+                break
+        
+        if not all_tasks_correct:
+            break
+
+    if all_tasks_correct:
+        user_certificates.append(course)
+    
+    return render_template("profile/info.html", current_user=current_user, user=user, user_info=user_info, user_certificates=user_certificates, unread=unread)
 
 
 @profile_bp.route('/profile/<id>/groups', methods=['GET', 'POST'])
@@ -146,7 +170,6 @@ def courses_favorites(id):
     return render_template("profile/courses_favorites.html", current_user=current_user, user=user, courses=courses, unread=unread)
 
 
-# todo: сортировка по deadline, разное отображение заданий, написание домашних заданий. если на "на проверке" - возможность отозвать задание
 @profile_bp.route("/profile/<id>/tasks", methods=["GET"])
 def profile_tasks(id):
     if not current_user.is_authenticated:
@@ -188,10 +211,21 @@ def tasks_pending(id):
 
         deadlines = db.session.query(Deadlines).filter_by(group_id=group.id, lesson_id=lesson.id).first()
 
-        hometasks = db.session.query(Hometasks).filter_by(task_id=task.id, student_id=id, status="pending").first()  
+        hometask = db.session.query(Hometasks).filter_by(task_id=task.id, student_id=id).first()  
 
-        if hometasks:  
-            tasks_info[task] = (course, lesson, deadlines, hometasks)
+        if not hometask:
+            hometask = Hometasks(
+                task_id=task.id,
+                student_id=current_user.id,
+                title=None,
+                text=None,
+                status='pending'
+            )
+            db.session.add(hometask)
+            db.session.commit()
+
+        if hometask.status == 'pending':  
+            tasks_info[task] = (course, lesson, deadlines, hometask)
     
     return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
 
@@ -226,7 +260,7 @@ def tasks_revision(id):
         if hometasks:  
             tasks_info[task] = (course, lesson, deadlines, hometasks)
     
-    return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
+    return render_template("profile/tasks_revision.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
 
 
 @profile_bp.route("/profile/<id>/tasks/done", methods=["GET"])
@@ -259,7 +293,7 @@ def tasks_done(id):
         if hometasks:  
             tasks_info[task] = (course, lesson, deadlines, hometasks)
     
-    return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
+    return render_template("profile/tasks_done.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
 
 
 @profile_bp.route("/profile/<id>/hometask/<task_id>", methods=["GET"])
@@ -274,42 +308,55 @@ def profile_hometask(id, task_id):
         
     unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
+    hometask = db.session.query(Hometasks).filter_by(id=task_id).first()
+    hometask_files = db.session.query(Files).filter_by(hometask_id=hometask.id).all()
+    task = db.session.query(Tasks).filter_by(id=hometask.task_id).first()
+    task_files = db.session.query(Files).filter_by(task_id=task.id).all()
+    
+    return render_template("profile/hometask.html", current_user=current_user, user=user, task=task, task_files=task_files, hometask=hometask, hometask_files=hometask_files, unread=unread)
+
+
+@profile_bp.route("/profile/<id>/hometask_view/<task_id>", methods=["GET"])
+def profile_hometask_view(id, task_id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+
+    user = Users.query.filter_by(id=id).first()
+
+    if current_user.id != user.id:
+        return redirect(url_for('profile.profile', id=current_user.id))
+
+    unread = len(db.session.query(Notifications).filter(Notifications.user_id == current_user.id, Notifications.unread == True).all())
 
     hometask = db.session.query(Hometasks).filter_by(id=task_id).first()
-    hometask_file = db.session.query(Files).filter_by(hometask_id=hometask.id).first()
+    hometask_files = db.session.query(Files).filter_by(hometask_id=hometask.id).all()
     task = db.session.query(Tasks).filter_by(id=hometask.task_id).first()
-    task_file = db.session.query(Files).filter_by(task_id=task.id).first()
+    task_files = db.session.query(Files).filter_by(task_id=task.id).all()
     
-    return render_template("profile/hometask.html", current_user=current_user, user=user, task=task, task_file=task_file, hometask=hometask, hometask_file=hometask_file, unread=unread)
+    return render_template("profile/hometask_view.html", current_user=current_user, user=user, task=task, task_files=task_files, hometask=hometask, hometask_files=hometask_files, unread=unread)
+
 
 
 @profile_bp.route("/profile/save_hometask", methods=["POST"])
 def save_hometask():
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
-
+    
     try:
         hometask_id = request.form['hometask_id']
-        hometask_file_id = request.form.get('hometask_file_id')
         title = request.form['title']
         text = request.form['text']
-        h_file = request.files.get('file')
+        uploaded_files = request.files.getlist('files')
         
-        if h_file:
-            if hometask_file_id:
-                db_file = db.session.query(Files).filter_by(id=hometask_file_id).first()
-                db_file.name=h_file.filename
-                db.session.commit()
-                h_file.save(os.path.join(current_app.root_path, "static", "files", str(db_file.id)))
-
-            else:
+        if uploaded_files:
+            for uploaded_file in uploaded_files:
                 new_file = Files(
-                    name=h_file.filename,
+                    name=uploaded_file.filename,
                     hometask_id=hometask_id
                 )
                 db.session.add(new_file)
                 db.session.commit()
-                h_file.save(os.path.join(current_app.root_path, "static", "files", str(new_file.id)))
+                uploaded_file.save(os.path.join(current_app.root_path, "static", "files", str(new_file.id)))
 
         db_hometask = db.session.query(Hometasks).filter_by(id=hometask_id).first()
         db_hometask.title = title
@@ -321,6 +368,79 @@ def save_hometask():
     except Exception as e:
         db.session.rollback()
         print(str(e))
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
+
+
+@profile_bp.route('/profile/delete_hometask_file', methods=['DELETE'])
+def delete_hometask_file():
+
+    try:
+        data = request.get_json()
+        file_id = data.get('file_id')
+
+        deleted_file = Files.query.filter_by(id=file_id).first()
+
+        if not deleted_file:
+            return jsonify({'category': 'warning', 'message': 'Файла не существует'})
+                
+        if current_user.id != Hometasks.query.filter_by(id=deleted_file.hometask_id).first().student_id:
+            return jsonify({'category': 'warning', 'message': 'Доступ запрещен'})
+
+        os.remove(os.path.join(current_app.root_path, "static", "files", str(deleted_file.id)))
+        db.session.delete(deleted_file)
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Домашнее задание сохранено'})
+    
+    except Exception as e:
+        db.session.rollback()
+        print(str(e))
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
+
+
+@profile_bp.route("/profile/submit_hometask", methods=["POST"])
+def submit_hometask():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        data = request.get_json()
+        hometask_id = data.get('hometask_id')
+
+        hometask = Hometasks.query.filter_by(id=hometask_id).first()
+
+        if hometask.student_id != current_user.id:
+            return jsonify({'category': 'danger', 'message': 'Ошибка при отправке задания'})
+        
+        hometask.status = 'needs revision'
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Ошибка доступа'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
+
+
+@profile_bp.route("/profile/recall_hometask", methods=["POST"])
+def recall_hometask():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        data = request.get_json()
+        hometask_id = data.get('hometask_id')
+
+        hometask = Hometasks.query.filter_by(id=hometask_id).first()
+
+        if hometask.student_id != current_user.id:
+            return jsonify({'category': 'danger', 'message': 'Ошибка доступа'})
+        
+        hometask.status = 'pending'
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Домашнее задание отозвано'})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
@@ -355,7 +475,7 @@ def favorite_toggle():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)})
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
 @profile_bp.route("/profile/send_request", methods=["POST"])
@@ -399,7 +519,7 @@ def send_request():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)})
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
 
 
 @profile_bp.route("/profile/<id>/notifications")
@@ -418,9 +538,6 @@ def notifications(id):
 
 @profile_bp.route("/profile/notification_status", methods=['POST'])
 def notification_status():
-    """
-    Функция обработки маршрута '/profile/notification_status', позволяющая изменять статус уведомления (прочитано/не прочитано).
-    """
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     
@@ -437,8 +554,30 @@ def notification_status():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)})
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
     
+
+@profile_bp.route("/profile/delete_notification", methods=['DELETE'])
+def delete_notification():
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        data = request.get_json()
+
+        notification_id = data.get('notificationId')
+        
+        notify = Notifications.query.filter_by(id=notification_id).first()
+
+        db.session.delete(notify)
+        db.session.commit()
+
+        return jsonify({'category': 'success', 'message': 'Уведомление удалено'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'category': 'danger', 'message': 'Ошибка на сервере'})
+
 
 @profile_bp.route("/profile/upload_image", methods=['POST'])
 def upload_image():

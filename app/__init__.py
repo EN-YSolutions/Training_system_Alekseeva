@@ -6,7 +6,7 @@ from uuid import UUID
 from flask import Flask
 from config import Config
 from app.routes import get_blueprints
-from app.extensions import login_manager, bcrypt, db
+from app.extensions import login_manager, db
 from app.models import Users
 
 
@@ -27,7 +27,6 @@ def create_app(config_class=Config) -> Flask:
     login_manager.login_message_category = "info"
 
     login_manager.init_app(app)
-    bcrypt.init_app(app)
     db.init_app(app)
 
     # Регистрирацая всех маршрутов

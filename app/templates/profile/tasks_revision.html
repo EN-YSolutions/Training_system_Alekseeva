@@ -13,21 +13,56 @@
               <span class="material-symbols-outlined"> more_vert </span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><button class="dropdown-item">Отправить домашнее задание</button></li>
+              <li><button class="dropdown-item recall-hometask" data-hometask-id="{{ value[3].id }}">Отозвать задание</button></li>
             </ul>
           </div>
         </div>
         <span>Курс: {{ value[0].title }}<span><br />
         <span>Урок: {{ value[1].title }}</span><br />
-        {% if value[2] %}
-        <span>Дата сдачи: {{ value[2].deadline.strftime('%Y-%m-%d %H:%M') }}</span><br />
-        {% else %}
-        <span>Дата сдачи отсутствует</span><br />
-        {% endif %}
-        <span>Домашнее задание: <a href="#">{{ value[3].title }}</a></span>
+        <span>На проверке</span><br />
+        <span>Домашнее задание: <a href="{{ url_for('profile.profile_hometask_view', id=current_user.id, task_id=value[3].id) }}">{{ value[3].title }}</a></span>
       </div>
     </div>
     {% endfor %}
 </div>
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    recallHometaskButtons = document.querySelectorAll('.recall-hometask');
+    recallHometaskButtons.forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+
+        var hometaskId = button.getAttribute('data-hometask-id');
+
+        fetch("/profile/recall_hometask", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            hometask_id: hometaskId
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.category != 'success') {
+              showNotification(data.message, data.category);
+            } else {
+                window.location.reload();
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка:', error);
+          });
+
+      });
+    })
+
+  });
+
+</script>
 
 {% endblock %}

@@ -26,15 +26,11 @@ class Users(UserMixin, db.Model):
 
     users_info = relationship("UsersInfo", backref="user", lazy=True)
     courses = relationship("Courses", backref="author", lazy=True)
-    courses_feedbacks = relationship("Courses_feedbacks", backref="author", lazy=True)
     groups = relationship("Groups", backref="curator", lazy=True)
     groups_members = relationship("Groups_members", backref="student", lazy=True)
     lessons = relationship("Lessons", backref="teacher", lazy=True)
-    lessons_feedbacks = relationship("Lessons_feedbacks", backref="author", lazy=True)
     hometasks = relationship("Hometasks", backref="student", lazy=True)
     notifications = relationship("Notifications", backref="user", lazy=True)
-    users_feedbacks = relationship("Users_feedbacks", backref="user", lazy=True, foreign_keys="[Users_feedbacks.user_id]")
-    users_feedbacks_2 = relationship("Users_feedbacks", backref="author", lazy=True, foreign_keys="[Users_feedbacks.author_id]")
 
     def __repr__(self):
         return '<User: %r>' % self.id
@@ -62,7 +58,6 @@ class Courses(db.Model):
     title = Column(String(255), unique=False, nullable=False)
     description = Column(Text, unique=False, nullable=True)
 
-    courses_feedbacks = relationship("Courses_feedbacks", backref="course", lazy=True)
     groups = relationship("Groups", backref="course", lazy=True)
     lessons = relationship("Lessons", backref="course", lazy=True)
 
@@ -78,20 +73,6 @@ class FavoritesCourses(db.Model):
 
     def __repr__(self):
         return "<FavoritesCourses: %s - %s>" % self.course_id, self.user_id
-
-
-class Courses_feedbacks(db.Model):
-    __tablename__ = 'courses_feedbacks'
-
-    id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
-    course_id = Column(UUID, ForeignKey("courses.id"), nullable=False, unique=False)
-    author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    text = Column(Text, nullable=False, unique=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
-
-    def __repr__(self):
-        return '<Courses_feedback: %r>' % self.id
-    
 
 
 class Groups(db.Model):
@@ -129,7 +110,6 @@ class Lessons(db.Model):
     text = Column(Text, nullable=False, unique=False)
 
     deadlines = relationship("Deadlines", backref="lesson", lazy=True)
-    lessons_feedbacks = relationship("Lessons_feedbacks", backref="lesson", lazy=True)
     tasks = relationship("Tasks", backref="lesson", lazy=True)
     file = relationship("Files", backref="lesson", lazy=True)
 
@@ -146,19 +126,6 @@ class Deadlines(db.Model):
 
     def __repr__(self):
         return '<Deadline: %s - %s>' % (self.group_id, self.lesson_id)
-
-
-class Lessons_feedbacks(db.Model):
-    __tablename__ = 'lessons_feedbacks'
-
-    id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
-    lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=False, unique=False)
-    author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    text = Column(Text, nullable=False, unique=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
-
-    def __repr__(self):
-        return '<Courses_feedback: %r>' % self.id
     
 
 class Tasks(db.Model):
@@ -182,8 +149,8 @@ class Hometasks(db.Model):
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     task_id = Column(UUID, ForeignKey("tasks.id"), nullable=False, unique=False)
     student_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    title = Column(String(255), nullable=False, unique=False)
-    text = Column(Text, nullable=False, unique=False)
+    title = Column(String(255), nullable=True, unique=False)
+    text = Column(Text, nullable=True, unique=False)
     status = Column(Enum("pending", "needs revision", "correct", "incorrect", name = "task_status"), nullable=False, unique=False)
 
     __table_args__ = (UniqueConstraint(task_id, student_id),)
@@ -220,15 +187,3 @@ class Notifications(db.Model):
     def __repr__(self):
         return '<Notification: %s>' % self.id 
 
-
-class Users_feedbacks(db.Model):
-    __tablename__ = 'users_feedbacks'
-
-    id = Column(UUID, primary_key=True, nullable=False, unique=False, server_default=func.gen_random_uuid())
-    user_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    text = Column(Text, nullable=False, unique=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False, unique=False)
-
-    def __repr__(self):
-        return '<Users_feedback: %s>' % self.id 

@@ -2,27 +2,39 @@
 
 {% block content %}
 
-{% with messages=get_flashed_messages(with_categories=true) %}
-<br />
-{% for category, message in messages %}
-<div class='alert alert-{{category}} text-center alert-dismissible fade show m-auto'>
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endfor %}
-{% endwith %}
-
-<br />
-
-<form method="POST">
-    {{form.hidden_tag()}}
-
-    {{form.login.label(class="form-label")}}
-    {{form.login(class="form-control")}}
-    {{form.password.label(class="form-label")}}
-    {{form.password(class="form-control")}}
-    <br />
-    {{form.submit(class="btn btn-secondary")}}
+<form id="login-form">
+    <label class="form-label" for="login">Логин</label>
+    <input class="form-control" id="login" name="login" required="" type="text" value="">
+    <label class="form-label" for="password">Пароль</label>
+    <input class="form-control" id="password" name="password" required="" type="password" value="">
+    <br>
+    <input class="btn btn-secondary" id="submit" type="submit" value="Войти">
 </form>
+
+<script>
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+    
+        var formData = new FormData(this); 
+    
+        fetch('/login', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.category != 'success') {
+                showNotification(data.message, data.category);
+            } else {
+                window.location.href = data.redirect_url;
+            }
+
+        })
+        .catch(error => {
+            console.error('Ошибка на сервере:', error);
+        });
+    });
+</script>
 
 {% endblock %}

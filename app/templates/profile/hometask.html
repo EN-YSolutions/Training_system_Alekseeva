@@ -4,16 +4,18 @@
 
 <h3>{{ task.title }}</h3>
 <p>{{ task.description }}</p>
-{% if task_file %}
+{% if task_files %}
+<label>Прикрепленные файлы:</label>
+{% endif %}
+{% for file in task_files %}
 <div class="mb-3">
-    <label>Прикрепленный файл:</label>
     <div class="attached-file">
-        <a href="{{ url_for('static', filename='files/' + task_file.id|string) }}" download="{{ task_file.name }}">
-            <i class="fa-solid fa-file-arrow-down"></i> {{ task_file.name }}
+        <a href="{{ url_for('static', filename='files/' + file.id|string) }}" download="{{ file.name }}">
+            <i class="fa-solid fa-file-arrow-down"></i> {{ file.name }}
         </a>
     </div>
 </div>
-{% endif %}
+{% endfor %}
 
 <h3>Домашнее задание</h3>
 <form method="POST" id="hometask-form">
@@ -27,19 +29,21 @@
             <textarea class="form-control auto-resize" name="text" placeholder="Текст" required autocomplete="off" oninput="autoResizeTextarea(this)">{{ hometask.text }}</textarea>
             <label>Текст</label>
         </div>
-        {% if hometask_file %}
-        <input type="hidden" name="hometask_file_id" value="{{ hometask_file.id|string }}">
+        {% if hometask_files %}
+        <label>Прикрепленные файлы:</label>
+        {% endif %}
+        {% for file in hometask_files %}
         <div class="mb-3">
-            <label>Прикрепленный файл:</label>
-            <div class="attached-file">
-                <a href="{{ url_for('static', filename='files/' + hometask_file.id|string) }}" download="{{ hometask_file.name }}">
-                    <i class="fa-solid fa-file-arrow-down"></i> {{ hometask_file.name }}
+            <div class="attached-file d-flex align-items-center mt-2">
+                <i class="fas fa-trash-alt text-danger remove-file me-2" style="cursor: pointer;" data-file-id="{{ file.id }}"></i>
+                <a href="{{ url_for('static', filename='files/' + file.id|string) }}" download="{{ file.name }}">
+                    <i class="fa-solid fa-file-arrow-down"></i> {{ file.name }}
                 </a>
             </div>
         </div>
-        {% endif %}
+        {% endfor %}
         <div class="input-group mb-3">
-            <input type="file" class="form-control" id="inputFile" name="file">
+            <input type="file" class="form-control" id="inputFile" name="files" multiple>
         </div>
     </div>
     <div class="card-footer">
@@ -78,14 +82,43 @@
                             showNotification(data.message, data.category);
                         }
 
-                        
-
                     })
                     .catch(error => {
-                        console.log(error);
+                        console.error(error);
                     });
             });
         }
+
+        var removeFileButtons = document.querySelectorAll('.remove-file');
+
+        removeFileButtons.forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                var fileId = button.getAttribute('data-file-id');
+                
+                fetch('/profile/delete_hometask_file', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_id: fileId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.category != 'success') {
+                        showNotification(data.message, data.category);
+                    } else {
+                        window.location.reload();
+                    }
+
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            });
+        });
+
 
     });
 </script>

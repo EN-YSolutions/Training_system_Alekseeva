@@ -13,7 +13,7 @@
               <span class="material-symbols-outlined"> more_vert </span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><button class="dropdown-item">Отправить домашнее задание</button></li>
+              <li><button class="dropdown-item submit-hometask" data-hometask-id="{{ value[3].id }}" >Отправить домашнее задание</button></li>
             </ul>
           </div>
         </div>
@@ -29,5 +29,44 @@
     </div>
     {% endfor %}
 </div>
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    submitHometaskButtons = document.querySelectorAll('.submit-hometask');
+    submitHometaskButtons.forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+
+        var hometaskId = button.getAttribute('data-hometask-id');
+
+        fetch("/profile/submit_hometask", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            hometask_id: hometaskId
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.category != 'success') {
+              showNotification(data.message, data.category);
+            } else {
+                window.location.reload();
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка:', error);
+          });
+
+      });
+    })
+
+  });
+
+</script>
 
 {% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'profile/profile.html' %} 
+
+{% block profile_content %}
+
+<h3>{{ task.title }}</h3>
+<p>{{ task.description }}</p>
+{% if task_files %}
+<label>Прикрепленные файлы:</label>
+{% endif %}
+{% for file in task_files %}
+<div class="mb-3">
+    <div class="attached-file">
+        <a href="{{ url_for('static', filename='files/' + file.id|string) }}" download="{{ file.name }}">
+            <i class="fa-solid fa-file-arrow-down"></i> {{ file.name }}
+        </a>
+    </div>
+</div>
+{% endfor %}
+
+<h3>Домашнее задание</h3>
+<div class="card-body">
+    <h4>{{ hometask.title }}</h4>
+    <p>{{ hometask.text }}</p>
+    {% if hometask_files %}
+    <label>Прикрепленные файлы:</label>
+    {% endif %}
+    {% for file in hometask_files %}
+    <div class="mb-3">
+        <div class="attached-file d-flex align-items-center mt-2">
+            <a href="{{ url_for('static', filename='files/' + file.id|string) }}" download="{{ file.name }}">
+                <i class="fa-solid fa-file-arrow-down"></i> {{ file.name }}
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
