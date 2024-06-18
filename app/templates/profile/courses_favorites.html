@@ -21,7 +21,7 @@
         </div>
         <p>{{ course.description }}</p>
         <span>
-            Цена курса: {{ course.price }} руб.
+            Цена курса: {% if course.price %} {{ course.price }} руб. {% else %} бесплатный {% endif %}
         </span>
       </div>
     </div>

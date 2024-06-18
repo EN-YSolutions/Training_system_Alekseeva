@@ -3,7 +3,7 @@
 {% block profile_content %}
 
 <div class="d-flex gap-2">
-  <a class="btn btn-light flex-fill {% if request.path == url_for('profile.courses_taken', id=user.id) %}active{% endif %}" type="button" href="{{ url_for('profile.courses_taken', id=user.id) }}">Прохожу</a>
+  <a class="btn btn-light flex-fill {% if request.path == url_for('profile.courses_taken', id=user.id) %}active{% endif %}" type="button" href="{{ url_for('profile.courses_taken', id=user.id) }}">{% if current_user.id == user.id %}Прохожу{% else %}Проходит{% endif%}</a>
   <a class="btn btn-light flex-fill {% if request.path == url_for('profile.courses_favorites', id=user.id) %}active{% endif %}" type="button" href="{{ url_for('profile.courses_favorites', id=user.id) }}">Избранные</a>
 </div>
 

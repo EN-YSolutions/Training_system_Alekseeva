@@ -2,9 +2,10 @@
 Определение маршрутов для страницы профиля веб-приложения.
 """
 import os
+import bcrypt
 from PIL import Image
 from re import fullmatch
-from datetime import datetime
+from datetime import datetime, timedelta
 from markupsafe import escape
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app
 from flask_login import current_user
@@ -57,12 +58,9 @@ def profile_info(id):
             if not hometask or hometask.status not in ["correct", "incorrect"]:
                 all_tasks_correct = False
                 break
-        
-        if not all_tasks_correct:
-            break
 
-    if all_tasks_correct:
-        user_certificates.append(course)
+        if all_tasks_correct:
+            user_certificates.append(course)
     
     return render_template("profile/info.html", current_user=current_user, user=user, user_info=user_info, user_certificates=user_certificates, unread=unread)
 
@@ -94,7 +92,7 @@ def profile_groups(id):
         tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == user.id, Hometasks.task_id == task.id).first() for task in tasks]
         tasks_status = [status[0] if status else "pending" for status in tasks_status]
 
-        result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
+        result_list.append(round(tasks_status.count('correct') / (len(tasks) if len(tasks) != 0 else 1) * 100, 2))
         result[group] = result_list
     
     return render_template("profile/groups.html", current_user=current_user, user=user, groups=result, unread=unread)
@@ -152,7 +150,7 @@ def courses_taken(id):
         tasks_status = [db.session.query(Hometasks.status).filter(Hometasks.student_id == user.id, Hometasks.task_id == task.id).first() for task in tasks]
         tasks_status = [status[0] if status else "pending" for status in tasks_status]        
 
-        result_list.append(round(tasks_status.count('correct') / len(tasks) * 100, 2))
+        result_list.append(round(tasks_status.count('correct') / (len(tasks) if len(tasks) != 0 else 1) * 100, 2))
         result[group] = result_list
 
     return render_template("profile/courses_taken.html", current_user=current_user, user=user, groups=result, unread=unread)
@@ -226,7 +224,10 @@ def tasks_pending(id):
 
         if hometask.status == 'pending':  
             tasks_info[task] = (course, lesson, deadlines, hometask)
-    
+
+    far_future_date = datetime.now() + timedelta(days=365*100)
+    tasks_info = dict(sorted(tasks_info.items(), key=lambda item: item[1][2].deadline.replace(tzinfo=None) if item[1][2] else far_future_date))
+
     return render_template("profile/tasks_pending.html", current_user=current_user, user=user, tasks_info=tasks_info, unread=unread)
 
 
@@ -382,7 +383,7 @@ def delete_hometask_file():
 
         if not deleted_file:
             return jsonify({'category': 'warning', 'message': 'Файла не существует'})
-                
+
         if current_user.id != Hometasks.query.filter_by(id=deleted_file.hometask_id).first().student_id:
             return jsonify({'category': 'warning', 'message': 'Доступ запрещен'})
 
@@ -669,25 +670,24 @@ def update_settings():
         if scoring_system_names.get(scoring_system, 'points') != current_user.scoring_system:
             current_user.scoring_system = scoring_system_names[scoring_system]
 
-        if not fullmatch(email_regex, email):
+        if email and not fullmatch(email_regex, email):
             return jsonify({'category': 'warning', 'message': 'Почта скорей всего не валидна. Обратитесь к администратору.'})
         elif email != current_user_info.email:
             current_user_info.email = email
 
-        if date != str(current_user_info.birth_date):
+        if date and date != str(current_user_info.birth_date):
             current_user_info.birth_date = date
 
-        if address != current_user_info.home_address:
+        if address and address != current_user_info.home_address:
             current_user_info.home_address = address
 
-        if phone != current_user_info.phone_number:
+        if phone and phone != current_user_info.phone_number:
             current_user_info.phone_number = phone
 
         if old_password:
-            if check_password_hash(current_user.password, old_password):
+            if bcrypt.checkpw(current_user.password.encode('utf-8'), old_password.encode('utf-8')):
                 if new_password == confirm_password:
-                    current_user.password = bcrypt.generate_password_hash(
-                        new_password).decode('utf-8')
+                    current_user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 else:
                     return jsonify({'category': 'warning', 'message': 'Пароли не совпадают'})
             else:

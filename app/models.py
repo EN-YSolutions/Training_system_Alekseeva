@@ -54,7 +54,7 @@ class Courses(db.Model):
 
     id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     author_id = Column(UUID, ForeignKey("users.id"), nullable=False, unique=False)
-    price = Column(NUMERIC(19, 2), unique=False, nullable=False)
+    price = Column(NUMERIC(19, 2), unique=False, nullable=True)
     title = Column(String(255), unique=False, nullable=False)
     description = Column(Text, unique=False, nullable=True)
 
@@ -164,7 +164,7 @@ class Hometasks(db.Model):
 class Files(db.Model):
     __tablename__ = 'files'
 
-    id = Column(UUID, primary_key=True, unique=True, server_default=func.get_random_uuid())
+    id = Column(UUID, primary_key=True, unique=True, server_default=func.gen_random_uuid())
     name = Column(String(255), nullable=False, unique=False)
     lesson_id = Column(UUID, ForeignKey("lessons.id"), nullable=True, unique=False)
     task_id = Column(UUID, ForeignKey("tasks.id"), nullable=True, unique=False)
